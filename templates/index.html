@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Consentimientos - PYM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+
+    <style>
+        :root {
+            --sidebar-width: 260px;
+
+            /* Light Theme Variables */
+            --primary-color-light: #074F69;
+            --secondary-color-light: #053a4e;
+            --bg-color-light: #f0f2f5;
+            --text-color-light: #212529;
+            --card-bg-light: #fff;
+            --card-header-text-light: var(--primary-color-light);
+            --input-bg-light: #fff;
+            --input-text-light: #495057;
+            --input-border-light: #ced4da;
+            --footer-bg-light: #e9ecef;
+            --footer-text-light: #6c757d;
+            --sidebar-text-light: #e9ecef;
+            --sidebar-text-hover-light: #fff;
+            --table-header-bg-light: var(--primary-color-light);
+            --table-header-text-light: #ffffff; /* Explicitly white for light theme header */
+            --link-color-light: var(--primary-color-light);
+            --subtle-border-color-light: #dee2e6;
+            --table-striped-bg-light: rgba(0, 0, 0, 0.025);
+            --table-hover-bg-light: rgba(0, 0, 0, 0.05);
+            --toast-header-bg-success-light: #198754; /* Bootstrap success green */
+            --toast-header-text-success-light: #fff;
+            --toast-header-bg-danger-light: #dc3545; /* Bootstrap danger red */
+            --toast-header-text-danger-light: #fff;
+            --form-label-color-light: var(--text-color-light);
+
+
+            /* Effective variables for light theme (defaults) */
+            --effective-primary-color-rgb: 7, 79, 105;
+            --effective-primary-color: var(--primary-color-light);
+            --effective-secondary-color: var(--secondary-color-light);
+            --effective-bg-color: var(--bg-color-light);
+            --effective-text-color: var(--text-color-light);
+            --effective-card-bg: var(--card-bg-light);
+            --effective-card-header-text: var(--card-header-text-light);
+            --effective-input-bg: var(--input-bg-light);
+            --effective-input-text: var(--input-text-light);
+            --effective-input-border: var(--input-border-light);
+            --effective-footer-bg: var(--footer-bg-light);
+            --effective-footer-text: var(--footer-text-light);
+            --effective-sidebar-bg: var(--primary-color-light);
+            --effective-sidebar-text: var(--sidebar-text-light);
+            --effective-sidebar-text-hover: var(--sidebar-text-hover-light);
+            --effective-sidebar-border: transparent;
+            --effective-table-header-bg: var(--table-header-bg-light);
+            --effective-table-header-text: var(--table-header-text-light);
+            --effective-link-color: var(--link-color-light);
+            --effective-subtle-border-color: var(--subtle-border-color-light);
+            --effective-readonly-bg: #e9ecef;
+            --effective-readonly-text: var(--text-color-light);
+            --effective-readonly-border: var(--input-border-light);
+            --effective-table-striped-bg: var(--table-striped-bg-light);
+            --effective-table-hover-bg: var(--table-hover-bg-light);
+            --effective-toast-header-bg-success: var(--toast-header-bg-success-light);
+            --effective-toast-header-text-success: var(--toast-header-text-success-light);
+            --effective-toast-header-bg-danger: var(--toast-header-bg-danger-light);
+            --effective-toast-header-text-danger: var(--toast-header-text-danger-light);
+            --effective-form-label-color: var(--form-label-color-light);
+        }
+
+        html[data-theme="dark"] {
+            /* Dark Theme Variable Overrides */
+            --primary-color-dark: #5096dc;
+            --secondary-color-dark: #3b7cb8;
+            --bg-color-dark: #131314;
+            --text-color-dark: #e8eaed;
+            --card-bg-dark: #1e1f20;
+            --card-header-text-dark: #bdc1c6;
+            --input-bg-dark: #2a2b2c;
+            --input-text-dark: #e8eaed;
+            --input-border-dark: #5f6368;
+            --footer-bg-dark: #1e1f20;
+            --footer-text-dark: #9aa0a6;
+            --sidebar-text-dark: #c0c0c0;
+            --sidebar-text-hover-dark: #fff;
+            --table-header-bg-dark: #2a2b2c;
+            --table-header-text-dark: #e8eaed;
+            --link-color-dark: #8ab4f8;
+            --subtle-border-color-dark: #3c4043;
+            --table-striped-bg-dark: rgba(255, 255, 255, 0.04);
+            --table-hover-bg-dark: rgba(255, 255, 255, 0.06);
+            --toast-header-bg-success-dark: #2a5c3f; /* Darker green for dark mode */
+            --toast-header-text-success-dark: #e8eaed; /* Light text for dark mode */
+            --toast-header-bg-danger-dark: #6b282e; /* Darker red for dark mode */
+            --toast-header-text-danger-dark: #e8eaed; /* Light text for dark mode */
+            --form-label-color-dark: var(--text-color-dark);
+
+
+            /* Effective variables for dark theme */
+            --effective-primary-color-rgb: 80, 150, 220;
+            --effective-primary-color: var(--primary-color-dark);
+            --effective-secondary-color: var(--secondary-color-dark);
+            --effective-bg-color: var(--bg-color-dark);
+            --effective-text-color: var(--text-color-dark);
+            --effective-card-bg: var(--card-bg-dark);
+            --effective-card-header-text: var(--card-header-text-dark);
+            --effective-input-bg: var(--input-bg-dark);
+            --effective-input-text: var(--input-text-dark);
+            --effective-input-border: var(--input-border-dark);
+            --effective-footer-bg: var(--footer-bg-dark);
+            --effective-footer-text: var(--footer-text-dark);
+            --effective-sidebar-bg: #1e1f20;
+            --effective-sidebar-text: var(--sidebar-text-dark);
+            --effective-sidebar-text-hover: var(--sidebar-text-hover-dark);
+            --effective-sidebar-border: var(--subtle-border-color-dark);
+            --effective-table-header-bg: #2a2b2c;
+            --effective-table-header-text: var(--table-header-text-dark);
+            --effective-link-color: var(--link-color-dark);
+            --effective-subtle-border-color: var(--subtle-border-color-dark);
+            --effective-readonly-bg: #222324;
+            --effective-readonly-text: var(--text-color-dark);
+            --effective-readonly-border: var(--subtle-border-color-dark);
+            --effective-table-striped-bg: var(--table-striped-bg-dark);
+            --effective-table-hover-bg: var(--table-hover-bg-dark);
+            --effective-toast-header-bg-success: var(--toast-header-bg-success-dark);
+            --effective-toast-header-text-success: var(--toast-header-text-success-dark);
+            --effective-toast-header-bg-danger: var(--toast-header-bg-danger-dark);
+            --effective-toast-header-text-danger: var(--toast-header-text-danger-dark);
+            --effective-form-label-color: var(--form-label-color-dark);
+        }
+
+        body {
+            background-color: var(--effective-bg-color);
+            color: var(--effective-text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-bottom: 70px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        a { color: var(--effective-link-color); text-decoration: none;}
+        a:hover { text-decoration: underline; }
+
+        .sidebar {
+            position: fixed; top: 0; left: 0; height: 100vh; width: var(--sidebar-width);
+            background-color: var(--effective-sidebar-bg);
+            padding: 20px 15px;
+            color: var(--effective-sidebar-text);
+            border-right: 1px solid var(--effective-sidebar-border);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+            z-index: 1000;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-header { text-align: center; margin-bottom: 20px; }
+        .sidebar-header .logo-placeholder {
+            width: 80px; height: 80px;
+            background-color: var(--effective-card-bg);
+            border-radius: 50%; margin: 0 auto 10px auto; display: flex; align-items: center;
+            justify-content: center; font-weight: bold;
+            color: var(--effective-primary-color);
+            font-size: 1.5em;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        html[data-theme="dark"] .sidebar-header .logo-placeholder {
+             background-color: #2a2b2c;
+             color: var(--effective-primary-color);
+        }
+        .sidebar-header h4 {
+            font-weight: 600;
+            color: var(--effective-text-color);
+            transition: color 0.3s;
+        }
+         html[data-theme="light"] .sidebar-header h4 {
+            color: var(--sidebar-text-light);
+         }
+
+
+        .sidebar .nav-link {
+            color: var(--effective-sidebar-text);
+            padding: 12px 15px; margin-bottom: 5px; border-radius: 8px;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            display: flex; align-items: center;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: var(--effective-secondary-color);
+            color: var(--effective-sidebar-text-hover);
+            font-weight: 500;
+        }
+        .sidebar .nav-link i { margin-right: 15px; font-size: 1.2em; }
+        .sidebar .form-check-label { color: var(--effective-sidebar-text); transition: color 0.3s;}
+
+        .sidebar .user-info {
+            border-top: 1px solid var(--effective-subtle-border-color);
+            padding-top: 15px; margin-top: 15px;
+            color: var(--effective-sidebar-text);
+        }
+         html[data-theme="light"] .sidebar .user-info {
+            border-top-color: rgba(255,255,255,0.2);
+         }
+
+        .sidebar .user-info p { margin-bottom: 0.3rem; font-size: 0.9em;}
+        .sidebar .user-info .btn-danger { font-size: 0.9em; }
+
+        .main-content { margin-left: var(--sidebar-width); padding: 30px; transition: all 0.3s; }
+
+        .card {
+            background-color: var(--effective-card-bg);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.08);
+            border: 1px solid var(--effective-subtle-border-color);
+            border-radius: 10px; margin-bottom: 30px;
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+         html[data-theme="dark"] .card {
+            box-shadow: 0 1px 2px 0 rgba(0,0,0,.6), 0 1px 3px 1px rgba(0,0,0,.3);
+        }
+        .card-header {
+            background-color: transparent;
+            color: var(--effective-card-header-text);
+            font-weight: bold; text-align: center;
+            border-bottom: 1px solid var(--effective-subtle-border-color);
+            padding: 15px; font-size: 1.3em;
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .form-label { /* Added rule for .form-label */
+            color: var(--effective-form-label-color);
+            transition: color 0.3s;
+        }
+
+        .form-control, .form-select {
+            background-color: var(--effective-input-bg);
+            color: var(--effective-input-text);
+            border: 1px solid var(--effective-input-border);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--effective-primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(var(--effective-primary-color-rgb), 0.25);
+        }
+        .form-control.is-invalid, .form-select.is-invalid { border-color: #dc3545 !important; }
+        .form-control.is-valid, .form-select.is-valid { border-color: #198754 !important; }
+        .invalid-feedback { color: #dc3545; }
+        html[data-theme="dark"] .invalid-feedback { color: #f17070; }
+        .valid-feedback { color: #198754; }
+        html[data-theme="dark"] .valid-feedback { color: #5cb85c; }
+        .form-text { color: #6c757d; }
+        html[data-theme="dark"] .form-text { color: var(--footer-text-dark); }
+
+        .btn-primary {
+            background-color: var(--effective-primary-color);
+            border-color: var(--effective-primary-color);
+            color: #fff;
+            transition: background-color 0.3s, border-color 0.3s, filter 0.3s;
+        }
+        .btn-primary:hover {
+            filter: brightness(90%);
+        }
+        html[data-theme="dark"] .btn-primary {
+            color: #131314;
+        }
+        html[data-theme="dark"] .btn-primary:hover {
+            filter: brightness(110%);
+        }
+
+        .readonly-field {
+            background-color: var(--effective-readonly-bg) !important;
+            color: var(--effective-readonly-text) !important;
+            border-color: var(--effective-readonly-border) !important;
+        }
+
+        .footer {
+            position: fixed; left: var(--sidebar-width); bottom: 0; width: calc(100% - var(--sidebar-width));
+            background-color: var(--effective-footer-bg);
+            color: var(--effective-footer-text);
+            text-align: center; padding: 8px 0; font-size: 0.85em;
+            border-top: 1px solid var(--effective-subtle-border-color);
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s; z-index: 999;
+        }
+
+        /* Table Styles */
+        .table {
+            --bs-table-color: var(--effective-text-color);
+            --bs-table-bg: var(--effective-card-bg);
+            --bs-table-border-color: var(--effective-subtle-border-color);
+            --bs-table-striped-color: var(--effective-text-color);
+            --bs-table-striped-bg: var(--effective-table-striped-bg);
+            --bs-table-hover-color: var(--effective-text-color);
+            --bs-table-hover-bg: var(--effective-table-hover-bg);
+            color: var(--bs-table-color);
+            table-layout: fixed;
+            width: 100%;
+        }
+        #dataTable thead th {
+            background-color: var(--effective-table-header-bg) !important;
+            color: var(--effective-table-header-text) !important;
+        }
+        .table td, .table th {
+             color: inherit;
+             word-wrap: break-word;
+             white-space: normal;
+        }
+
+        /* DataTables specific controls */
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: var(--effective-input-bg);
+            border: 1px solid var(--effective-input-border);
+            color: var(--effective-input-text) !important;
+        }
+        .dataTables_wrapper .dataTables_info,
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label,
+        .dataTables_wrapper .paginate_button {
+            color: var(--effective-text-color) !important;
+        }
+
+        .page-item.disabled .page-link {
+            background-color: var(--effective-readonly-bg);
+            border-color: var(--effective-subtle-border-color);
+            color: #5f6368;
+        }
+        .page-link {
+            background-color: var(--effective-input-bg);
+            border-color: var(--effective-subtle-border-color);
+            color: var(--effective-link-color);
+        }
+        .page-item.active .page-link {
+            background-color: var(--effective-primary-color);
+            border-color: var(--effective-primary-color);
+            color: #fff;
+        }
+        html[data-theme="dark"] .page-item.active .page-link {
+            color: #131314;
+        }
+
+        #form-section, #table-section { display: none; }
+        .dt-buttons .btn { margin-left: 5px; }
+        .dataTables_wrapper .row:first-child > div:last-child { text-align: right;}
+        .dataTables_wrapper .row:first-child > div:first-child { display: flex; align-items: center;}
+        .dataTables_wrapper .row:first-child .dt-buttons { margin-left: 10px; }
+        .toast-container { z-index: 1090; }
+
+        #dataTable td.col-observaciones {
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        #dataTable td.col-observaciones:hover {
+            overflow: visible;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        /* Toast Styles */
+        .toast-header.bg-success {
+            background-color: var(--effective-toast-header-bg-success) !important;
+            color: var(--effective-toast-header-text-success) !important;
+        }
+        .toast-header.bg-danger {
+            background-color: var(--effective-toast-header-bg-danger) !important;
+            color: var(--effective-toast-header-text-danger) !important;
+        }
+        html[data-theme="dark"] .toast-body {
+            background-color: var(--card-bg-dark); /* Ensure toast body matches card bg in dark mode */
+            color: var(--text-color-dark);
+        }
+         html[data-theme="light"] .toast-body {
+            background-color: var(--card-bg-light);
+            color: var(--text-color-light);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <div class="logo-placeholder"><span>PYM</span></div>
+                <h4>Gestión Salesland</h4>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="link-form">
+                        <i class="bi bi-pencil-square"></i> Registrar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" id="link-table">
+                        <i class="bi bi-table"></i> Visualizar Registros
+                    </a>
+                </li>
+                {% if current_user.is_authenticated and current_user.rol == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('dashboard') }}" id="link-dashboard">
+                        <i class="bi bi-bar-chart-line-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('manage_users') }}" id="link-manage">
+                        <i class="bi bi-person-fill-gear"></i> Gestionar Accesos
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        <div class="mt-auto p-2">
+            {% if current_user.is_authenticated %}
+            <div class="user-info">
+                <p class="small mb-1">Usuario: <strong>{{ current_user.nombre_completo }}</strong></p>
+                <p class="small mb-2">Rol: {{ current_user.rol|capitalize }}</p>
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-danger w-100">
+                    <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
+                </a>
+            </div>
+            {% endif %}
+            <div class="form-check form-switch mt-3">
+              <input class="form-check-input" type="checkbox" role="switch" id="darkModeToggle">
+              <label class="form-check-label" for="darkModeToggle">Modo Casino</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+      <div id="responseToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="toast-header">
+            <strong class="me-auto" id="toastHeader">Notificación</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastBody">Mensaje aquí.</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+        <section id="form-section">
+            <div class="card">
+                <div class="card-header">INGRESAR NUEVO REGISTRO</div>
+                <div class="card-body p-4">
+                    <form id="consentForm" novalidate>
+                       <div class="row g-3 mb-3">
+                           <div class="col-md-6">
+                               <label for="telefono" class="form-label">Teléfono:</label>
+                               <input type="tel" class="form-control" id="telefono" name="telefono" required maxlength="9">
+                               <div class="invalid-feedback">El teléfono debe ser un número de 9 dígitos que comience con 9.</div>
+                           </div>
+                           <div class="col-md-6">
+                               <label for="dni_asesor" class="form-label">DNI Asesor:</label>
+                               <input type="text" class="form-control" id="dni_asesor" name="dni_asesor" required maxlength="9">
+                               <div class="invalid-feedback">El DNI debe ser de 8 o 9 dígitos numéricos.</div>
+                           </div>
+                       </div>
+                       <div class="row g-3 mb-3">
+                           <div class="col-md-6">
+                               <label for="asesor" class="form-label">Asesor:</label>
+                               <input type="text" class="form-control readonly-field" id="asesor" name="asesor" readonly>
+                           </div>
+                           <div class="col-md-6">
+                               <label for="campana" class="form-label">Campaña:</label>
+                               <input type="text" class="form-control readonly-field" id="campana" name="campana" readonly>
+                           </div>
+                       </div>
+                       <div class="row g-3 mb-3">
+                           <div class="col-md-6">
+                               <label for="supervisor" class="form-label">Supervisor:</label>
+                               <input type="text" class="form-control readonly-field" id="supervisor" name="supervisor" readonly>
+                           </div>
+                           <div class="col-md-6">
+                               <label for="coordinador" class="form-label">Coordinador:</label>
+                               <input type="text" class="form-control readonly-field" id="coordinador" name="coordinador" readonly>
+                           </div>
+                       </div>
+                       <hr>
+                       <div class="row g-3 mb-3">
+                           <div class="col-md-6">
+                               <label for="tipifica_bien" class="form-label">¿Tipifica bien?</label>
+                               <select class="form-select" id="tipifica_bien" name="tipifica_bien" required>
+                                   <option value="">Seleccione</option> <option value="SI">SI</option> <option value="NO">NO</option><option value="NO APLICA">NO APLICA</option>
+                               </select>
+                               <div class="invalid-feedback">Seleccione una opción.</div>
+                           </div>
+                           <div class="col-md-6">
+                               <label for="cliente_desiste" class="form-label">¿Consentimiento?</label>
+                               <select class="form-select" id="cliente_desiste" name="cliente_desiste" required>
+                                   <option value="">Seleccione</option> <option value="SI">SI</option> <option value="NO">NO</option><option value="NO APLICA">NO APLICA</option>
+                               </select>
+                               <div class="invalid-feedback">Seleccione una opción.</div>
+                           </div>
+                       </div>
+                       <hr>
+                       <div class="row g-3 mb-3">
+                           <div class="col-md-6">
+                               <label for="dni_auditor" class="form-label">DNI Auditor:</label>
+                               <input type="text" class="form-control" id="dni_auditor" name="dni_auditor" required list="dniAuditorDatalist">
+                               <datalist id="dniAuditorDatalist">
+                                    {% if auditores_para_datalist %}
+                                        {% for dni_val, nombre_val in auditores_para_datalist.items() %}
+                                            <option value="{{ dni_val }}">{{ nombre_val }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+                               </datalist>
+                               <div class="invalid-feedback">Este campo es obligatorio.</div>
+                           </div>
+                           <div class="col-md-6">
+                               <label for="nombre_auditor" class="form-label">Nombre Auditor:</label>
+                               <input type="text" class="form-control readonly-field" id="nombre_auditor" name="nombre_auditor" readonly required>
+                           </div>
+                       </div>
+                       <div class="mb-4">
+                           <label for="observaciones" class="form-label">Observaciones:</label>
+                           <textarea class="form-control" id="observaciones" name="observaciones" rows="3"></textarea>
+                       </div>
+                       <div class="d-grid gap-2">
+                           <button type="submit" class="btn btn-primary btn-lg" id="submitButton">Registrar</button>
+                       </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="table-section">
+            <div class="card">
+                <div class="card-header">REGISTROS ACTUALES</div>
+                <div class="card-body p-4">
+                     <div class="table-responsive">
+                        <table id="dataTable" class="table table-striped table-bordered table-hover" style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th>ID</th> <th>Teléfono</th> <th>DNI Asesor</th> <th>Asesor</th>
+                                    <th>Campaña</th> <th>Supervisor</th> <th>Coordinador</th>
+                                    <th>Tipifica?</th> <th>Consent.?</th>
+                                    <th>Observaciones</th> <th>Auditor</th> <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in records %}
+                                <tr>
+                                    <td>{{ record.id }}</td>
+                                    <td>{{ record.telefono }}</td>
+                                    <td>{{ record.dni_asesor }}</td>
+                                    <td>{{ record.asesor }}</td>
+                                    <td>{{ record.campana }}</td>
+                                    <td>{{ record.supervisor }}</td>
+                                    <td>{{ record.coordinador }}</td>
+                                    <td>{{ record.tipifica_bien }}</td>
+                                    <td>{{ record.cliente_desiste }}</td>
+                                    <td class="col-observaciones" title="{{ record.observaciones }}">{{ record.observaciones }}</td>
+                                    <td>{{ record.nombre_auditor }}</td>
+                                    <td>{{ record.fecha_registro }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                     </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer"> PYM Area de Desarrollo ™ </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // --- Constants and Global Variables ---
+            const auditores_para_datalist = {{ auditores_para_datalist|tojson if auditores_para_datalist else '{}' }};
+            const currentUserRol = "{{ current_user.rol }}";
+            const currentUserDataSource = "{{ current_user.data_source }}";
+            const isAuthenticated = {{ current_user.is_authenticated | tojson }};
+            const loggedInAuditorDNI = isAuthenticated ? "{{ current_user.dni_auditor }}" : "";
+            const loggedInAuditorNombre = isAuthenticated ? "{{ current_user.nombre_completo }}" : "";
+            const toastEl = document.getElementById('responseToast');
+            const responseToast = new bootstrap.Toast(toastEl);
+            const darkModeToggle = document.getElementById('darkModeToggle');
+
+            // --- DataTable Initialization ---
+            const table = $('#dataTable').DataTable({
+                "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json" },
+                "order": [[ 0, "desc" ]],
+                "dom": "<'row mb-3'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                       "<'row mb-3'<'col-sm-12'B>>" +
+                       "<'row'<'col-sm-12'tr>>" +
+                       "<'row mt-3'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                "buttons": [{
+                    extend: 'excelHtml5',
+                    text: '<i class="bi bi-file-earmark-excel-fill"></i> Exportar a Excel',
+                    titleAttr: 'Exportar a Excel',
+                    className: 'btn btn-success btn-sm',
+                    exportOptions: { columns: ':visible', orthogonal: 'export' }
+                }],
+                "autoWidth": true,
+                "columnDefs": [
+                    { "targets": 0, "width": "3%" },
+                    { "targets": 1, "width": "9%" },
+                    { "targets": 2, "width": "8%" },
+                    { "targets": 3, "width": "20%" },
+                    { "targets": 4, "width": "10%" },
+                    { "targets": 5, "width": "10%" },
+                    { "targets": 6, "width": "10%" },
+                    { "targets": 7, "width": "5%" },
+                    { "targets": 8, "width": "5%" },
+                    {
+                        "targets": 9, "width": "15%", "className": "col-observaciones",
+                        "render": function ( data, type, row ) {
+                            if ( type === 'display' && data && data.length > 70 ) {
+                                return '<span title="'+data.replace(/"/g, '&quot;')+'">'+data.substr( 0, 70 ) + '...</span>';
+                            }
+                            return data;
+                        }
+                    },
+                    { "targets": 10, "width": "8%" },
+                    { "targets": 11, "width": "6%" }
+                 ]
+            }); //
+
+            // --- Helper Functions ---
+            function showToast(header, body, isSuccess) {
+                $('#toastHeader').text(header);
+                $('#toastBody').text(body);
+                const toastHeaderEl = $('#responseToast .toast-header');
+                toastHeaderEl.removeClass('bg-success bg-danger');
+                const [bgColorVar, textColorVar] = isSuccess
+                    ? ['--effective-toast-header-bg-success', '--effective-toast-header-text-success']
+                    : ['--effective-toast-header-bg-danger', '--effective-toast-header-text-danger'];
+                toastHeaderEl.addClass(isSuccess ? 'bg-success' : 'bg-danger');
+                toastHeaderEl.css('color', `var(${textColorVar})`);
+                toastHeaderEl.css('background-color', `var(${bgColorVar})`);
+                responseToast.show();
+            } //
+
+            function setTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                if (darkModeToggle) {
+                    darkModeToggle.checked = (theme === 'dark');
+                }
+            } //
+
+            function setCoordinadorIfSQL() {
+                 if (currentUserDataSource === 'sql') {
+                    $('#coordinador').val('Marjorie Landa Temoche');
+                } else {
+                    $('#coordinador').val(''); // Clear if not SQL or for other cases
+                }
+            } //
+
+            function autoFillAndLockAuditorFields() {
+                if (isAuthenticated) {
+                    $('#dni_auditor').val(loggedInAuditorDNI).prop('readonly', true).addClass('readonly-field is-valid').removeClass('is-invalid');
+                    $('#nombre_auditor').val(loggedInAuditorNombre).prop('readonly', true).addClass('readonly-field');
+                    $('#dni_auditor').attr('list', '');
+                } else {
+                    $('#dni_auditor').prop('readonly', false).removeClass('readonly-field is-valid');
+                    $('#dni_auditor').attr('list', 'dniAuditorDatalist');
+                }
+            } //
+
+            function validateField(field, regex, errorMessage, minLength = 0, maxLength = 0, isRequired = true, exactLength = 0) {
+                const value = field.val().trim();
+                let isValid = true;
+                let currentErrorMessage = errorMessage;
+
+                if (isRequired && value === "") {
+                    isValid = false;
+                    currentErrorMessage = field.siblings('.invalid-feedback').data('default-error') || 'Este campo es obligatorio.';
+                } else if (value !== "") {
+                    if (regex) isValid = regex.test(value);
+                    if (minLength > 0 && value.length < minLength) isValid = false;
+                    if (maxLength > 0 && value.length > maxLength) isValid = false;
+                    if (exactLength > 0 && value.length !== exactLength) isValid = false;
+                }
+
+                if (!isValid && (isRequired || value !== "")) {
+                    field.removeClass('is-valid').addClass('is-invalid');
+                    field.siblings('.invalid-feedback').text(currentErrorMessage);
+                } else if (isValid && value !== ""){
+                    field.removeClass('is-invalid').addClass('is-valid');
+                } else {
+                     field.removeClass('is-valid is-invalid');
+                }
+                return isValid || (!isRequired && value === "");
+            } //
+
+            const fieldsToValidate = {
+                '#telefono': { regex: /^9\d{8}$/, message: 'El teléfono debe ser un número de 9 dígitos que comience con 9.', exactLength: 9, required: true },
+                '#dni_asesor': { regex: /^[0-9]{8,9}$/, message: 'El DNI debe ser de 8 o 9 dígitos.', minLength: 8, maxLength: 9, required: true }
+            }; //
+
+            function checkFormValidity() {
+                let isFormValid = true;
+                $('#consentForm').removeClass('was-validated');
+
+                for (const fieldId in fieldsToValidate) {
+                    const fieldConfig = fieldsToValidate[fieldId];
+                    if (!validateField($(fieldId), fieldConfig.regex, fieldConfig.message, fieldConfig.minLength, fieldConfig.maxLength, fieldConfig.required, fieldConfig.exactLength)) {
+                        isFormValid = false;
+                    }
+                }
+
+                $('select[required], input#dni_auditor[required]').each(function() {
+                    let fieldIsValid = true;
+                    if ($(this).val() === "") {
+                        fieldIsValid = false;
+                    }
+                     if ($(this).is('#dni_auditor') && $(this).prop('readonly') && $(this).val() === "" && $(this).prop('required')) {
+                        fieldIsValid = false;
+                    }
+
+                    if (!fieldIsValid) {
+                        $(this).removeClass('is-valid').addClass('is-invalid');
+                        $(this).siblings('.invalid-feedback').text($(this).siblings('.invalid-feedback').data('default-error') || 'Este campo es obligatorio.');
+                        isFormValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid').addClass('is-valid');
+                    }
+                });
+                $('#submitButton').prop('disabled', !isFormValid);
+                return isFormValid;
+            } //
+
+            function resetFormValidation() {
+                $('#consentForm')[0].reset();
+                $('#consentForm').removeClass('was-validated');
+                $('#consentForm input, #consentForm select, #consentForm textarea').each(function(){
+                    if(!$(this).prop('readonly')){
+                        $(this).removeClass('is-valid is-invalid');
+                    }
+                });
+                $('input[required], select[required], input#dni_auditor[required]').each(function() {
+                     if(!$(this).prop('readonly')){
+                        $(this).siblings('.invalid-feedback').text($(this).siblings('.invalid-feedback').data('default-error'));
+                     }
+                });
+                $('#submitButton').prop('disabled', false);
+                setCoordinadorIfSQL();
+            } //
+
+            function showSection(sectionIdToShow) {
+                $('section').hide();
+                $(sectionIdToShow).show();
+                $('.sidebar .nav-link').removeClass('active');
+
+                if (sectionIdToShow === '#table-section') {
+                    $('#link-table').addClass('active');
+                    table.columns.adjust().draw();
+                } else if (sectionIdToShow === '#form-section') {
+                    $('#link-form').addClass('active');
+                    autoFillAndLockAuditorFields();
+                    setCoordinadorIfSQL();
+                    checkFormValidity();
+                }
+            } //
+
+            // --- Event Handlers ---
+            if(darkModeToggle){
+                darkModeToggle.addEventListener('change', function() {
+                    setTheme(this.checked ? 'dark' : 'light');
+                });
+            } //
+
+            $('#telefono').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length > 0 && value.charAt(0) !== '9') value = '';
+                $(this).val(value.substring(0, 9));
+            }); //
+            $('#dni_asesor').on('input', function() { this.value = this.value.replace(/\D/g, ''); }); //
+
+            $('input[required], select[required]').each(function() {
+                const defaultMsg = $(this).siblings('.invalid-feedback').text() || 'Este campo es obligatorio.';
+                if ($(this).is('#telefono')) {
+                    $(this).siblings('.invalid-feedback').text('El teléfono debe ser un número de 9 dígitos que comience con 9.');
+                    $(this).siblings('.invalid-feedback').data('default-error', 'El teléfono debe ser un número de 9 dígitos que comience con 9.');
+                } else {
+                    $(this).siblings('.invalid-feedback').data('default-error', defaultMsg);
+                }
+            }); //
+
+            Object.keys(fieldsToValidate).forEach(fieldId => {
+                 $(fieldId).on('input blur', function() {
+                    const fieldConfig = fieldsToValidate[fieldId];
+                    validateField($(this), fieldConfig.regex, fieldConfig.message, fieldConfig.minLength, fieldConfig.maxLength, fieldConfig.required, fieldConfig.exactLength);
+                    checkFormValidity();
+                });
+            }); //
+            $('select[required], input#dni_auditor[required]').on('change input blur', checkFormValidity); //
+
+            $('#link-form').click(function(e) { e.preventDefault(); showSection('#form-section'); }); //
+            $('#link-table').click(function(e) { e.preventDefault(); showSection('#table-section'); }); //
+
+            $('#dni_asesor').on('blur', function() {
+                let dniField = $(this);
+                let isValidForAjax = validateField(dniField, fieldsToValidate['#dni_asesor'].regex, fieldsToValidate['#dni_asesor'].message, 8, 9, true);
+                const dni = dniField.val().trim();
+
+                $('#asesor, #campana, #supervisor').val(''); // Clear dependent fields
+                setCoordinadorIfSQL(); // Reset coordinator based on SQL or not
+
+                if (dni && isValidForAjax) {
+                    const apiUrl = (currentUserDataSource === 'sql') ? `/get_sql_advisor_data/${dni}` : `/get_advisor_sheet/${dni}`;
+                    const sourceName = (currentUserDataSource === 'sql') ? 'SQL' : 'Sheet';
+                    $('#asesor, #campana, #supervisor').val(`Buscando en ${sourceName}...`);
+
+                    $.ajax({
+                        url: apiUrl, type: 'GET',
+                        success: function(data) {
+                            if (data.error) {
+                                showToast(`Error DNI (${sourceName})`, data.error, false);
+                                $('#asesor, #campana, #supervisor').val('');
+                                setCoordinadorIfSQL();
+                            } else {
+                                $('#asesor').val(data.asesor || '');
+                                $('#campana').val(data.campana || '');
+                                $('#supervisor').val(data.supervisor || '');
+                                $('#coordinador').val(data.coordinador || (currentUserDataSource === 'sql' ? 'Marjorie Landa Temoche' : ''));
+                            }
+                            checkFormValidity();
+                        },
+                        error: function(jqXHR) {
+                            const errorMsg = (jqXHR.responseJSON && jqXHR.responseJSON.error) ? jqXHR.responseJSON.error : `No se pudo contactar al servidor (${sourceName}).`;
+                            showToast(`Error Red (${sourceName})`, errorMsg, false);
+                            $('#asesor, #campana, #supervisor').val('');
+                            setCoordinadorIfSQL();
+                            checkFormValidity();
+                        }
+                    });
+                } else {
+                    checkFormValidity();
+                }
+            }); //
+
+            if (!isAuthenticated) {
+                $('#dni_auditor').on('input', function() {
+                    $('#nombre_auditor').val(auditores_para_datalist[$(this).val()] || '');
+                    checkFormValidity();
+                });
+            } //
+
+            const originalFormReset = HTMLFormElement.prototype.reset;
+            $('#consentForm')[0].reset = function() {
+                originalFormReset.call(this);
+                resetFormValidation();
+                autoFillAndLockAuditorFields();
+                setCoordinadorIfSQL();
+                checkFormValidity();
+            }; //
+
+            $('#consentForm').on('submit', function(e) {
+                e.preventDefault();
+                if (!checkFormValidity()) {
+                    $('#consentForm').addClass('was-validated');
+                    showToast('Formulario Inválido', 'Por favor, corrija los errores resaltados.', false);
+                    return;
+                }
+                const formData = $(this).serialize();
+                $.ajax({
+                    url: '/submit', type: 'POST', data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            showToast('Éxito', response.message, true);
+                            $('#consentForm')[0].reset();
+                            const rec = response.record;
+                            table.row.add([
+                                rec.id, rec.telefono, rec.dni_asesor, rec.asesor,
+                                rec.campana, rec.supervisor, rec.coordinador,
+                                rec.tipifica_bien, rec.cliente_desiste,
+                                rec.observaciones, rec.nombre_auditor, rec.fecha_registro
+                            ]).draw(false);
+                        } else {
+                            showToast('Error al Guardar', response.message, false);
+                        }
+                    },
+                    error: function() { showToast('Error de Red', 'No se pudo enviar el formulario.', false); }
+                });
+            }); //
+
+            // --- Initial Page Setup ---
+            let initialThemeLoaded = localStorage.getItem('theme');
+            if (!initialThemeLoaded) {
+                initialThemeLoaded = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            setTheme(initialThemeLoaded); //
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const viewParam = urlParams.get('view');
+            showSection(viewParam === 'table' ? '#table-section' : '#form-section'); //
+
+            autoFillAndLockAuditorFields(); //
+            setCoordinadorIfSQL(); //
+            checkFormValidity(); //
+        });
+    </script>
+</body>
+</html>
