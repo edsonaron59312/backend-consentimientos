@@ -1,193 +1,102 @@
 <!DOCTYPE html>
-<html lang="es" data-theme="light">
+<html lang="es" data-bs-theme="light"> {# Usando data-bs-theme para Bootstrap 5.3+ #}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - Gestión Salesland</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Light Theme Variables */
             --primary-color-light: #074F69;
-            --secondary-color-light: #053a4e; /* For hovers or secondary actions */
-            --bg-color-light: #f0f2f5;    /* Page background */
-            --text-color-light: #212529;  /* Main text color */
-            --card-bg-light: #fff;       /* Card background */
-            --input-bg-light: #fff;
-            --input-text-light: #495057;
+            --bg-color-light: #f0f2f5;
+            --text-color-light: #212529;
+            --card-bg-light: #ffffff;
             --input-border-light: #ced4da;
-            --link-color-light: var(--primary-color-light);
 
-            /* Effective variables for light theme (defaults) */
-            --effective-primary-color-rgb: 7, 79, 105;
-            --effective-primary-color: var(--primary-color-light);
-            --effective-secondary-color: var(--secondary-color-light);
-            --effective-bg-color: var(--bg-color-light);
-            --effective-text-color: var(--text-color-light);
-            --effective-card-bg: var(--card-bg-light);
-            --effective-input-bg: var(--input-bg-light);
-            --effective-input-text: var(--input-text-light);
-            --effective-input-border: var(--input-border-light);
-            --effective-link-color: var(--link-color-light);
-        }
-
-        html[data-theme="dark"] {
-            /* Dark Theme Variable Overrides */
             --primary-color-dark: #5096dc;
-            --secondary-color-dark: #3b7cb8;
             --bg-color-dark: #131314;
             --text-color-dark: #e8eaed;
             --card-bg-dark: #1e1f20;
-            --input-bg-dark: #2a2b2c;
-            --input-text-dark: #e8eaed;
             --input-border-dark: #5f6368;
-            --link-color-dark: #8ab4f8;
-
-            /* Effective variables for dark theme */
-            --effective-primary-color-rgb: 80, 150, 220;
-            --effective-primary-color: var(--primary-color-dark);
-            --effective-secondary-color: var(--secondary-color-dark);
-            --effective-bg-color: var(--bg-color-dark);
-            --effective-text-color: var(--text-color-dark);
-            --effective-card-bg: var(--card-bg-dark);
-            --effective-input-bg: var(--input-bg-dark);
-            --effective-input-text: var(--input-text-dark);
-            --effective-input-border: var(--input-border-dark);
-            --effective-link-color: var(--link-color-dark);
         }
 
-         body {
-            background-color: var(--effective-bg-color);
-            color: var(--effective-text-color);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        html[data-bs-theme="light"] {
+            --bs-primary-rgb: 7, 79, 105; /* Para que los componentes de Bootstrap usen #074F69 */
+            --bs-primary: var(--primary-color-light);
+            --bs-body-bg: var(--bg-color-light);
+            --bs-body-color: var(--text-color-light);
+            --bs-card-bg: var(--card-bg-light);
+            --bs-border-color: var(--input-border-light);
+        }
+
+        html[data-bs-theme="dark"] {
+            --bs-primary-rgb: 80, 150, 220;
+            --bs-primary: var(--primary-color-dark);
+            --bs-body-bg: var(--bg-color-dark);
+            --bs-body-color: var(--text-color-dark);
+            --bs-card-bg: var(--card-bg-dark);
+            --bs-border-color: var(--input-border-dark);
+            --bs-link-color-rgb: 138, 180, 248; /* Para que los enlaces se vean bien en modo oscuro */
+            --bs-link-hover-color-rgb: 162, 199, 255;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            background-color: var(--bs-body-bg);
+            color: var(--bs-body-color);
             transition: background-color 0.3s, color 0.3s;
         }
         .login-card {
             width: 100%;
-            max-width: 400px;
-            padding: 30px;
-            background-color: var(--effective-card-bg);
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            border: 1px solid var(--effective-input-border); /* Use input border for consistency */
-            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            max-width: 420px;
+            padding: 2rem;
+            background-color: var(--bs-card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.075);
+            border: 1px solid var(--bs-border-color);
         }
-        html[data-theme="dark"] .login-card {
+        html[data-bs-theme="dark"] .login-card {
              box-shadow: 0 1px 2px 0 rgba(0,0,0,.6), 0 1px 3px 1px rgba(0,0,0,.3);
         }
-
-        .login-card .logo-placeholder {
-            width: 70px; height: 70px;
-            background-color: var(--effective-primary-color);
-            color: #fff; /* White text on primary color bg */
-            border-radius: 50%; margin: 0 auto 25px auto; display: flex; align-items: center;
+        .logo-container {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .logo-placeholder {
+            width: 60px; height: 60px;
+            background-color: var(--bs-primary);
+            color: #fff;
+            border-radius: 50%; 
+            display: inline-flex; align-items: center;
             justify-content: center; font-weight: bold; font-size: 1.8em;
         }
-         html[data-theme="dark"] .login-card .logo-placeholder {
-              color: #131314; /* Dark text for light blue logo bg in dark mode */
-         }
-
-        .form-label {
-            color: var(--effective-text-color);
-        }
-        .form-control {
-            background-color: var(--effective-input-bg);
-            color: var(--effective-input-text);
-            border: 1px solid var(--effective-input-border);
-        }
-        .form-control::placeholder {
-            color: var(--effective-input-text);
-            opacity: 0.7;
-        }
-        html[data-theme="dark"] .form-control::placeholder {
-            color: var(--input-text-dark);
-            opacity: 0.5;
+        html[data-bs-theme="dark"] .logo-placeholder {
+              color: var(--bs-body-bg); /* Texto oscuro para logo claro en modo oscuro */
         }
         .form-control:focus {
-            background-color: var(--effective-input-bg);
-            color: var(--effective-input-text);
-            border-color: var(--effective-primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(var(--effective-primary-color-rgb), 0.25);
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
         }
-        .btn-primary {
-            background-color: var(--effective-primary-color);
-            border-color: var(--effective-primary-color);
-            color: #fff; /* White text for primary buttons */
-            transition: background-color 0.3s, border-color 0.3s, filter 0.3s;
+        .btn-primary { /* Bootstrap usará --bs-primary y --bs-primary-rgb */
+            font-weight: 600;
+            padding: 0.6rem 1.2rem;
         }
-        html[data-theme="dark"] .btn-primary {
-             color: #131314; /* Dark text for light blue button in dark mode */
-        }
-         .btn-primary:hover {
-            filter: brightness(90%);
-        }
-        html[data-theme="dark"] .btn-primary:hover {
-             filter: brightness(110%);
-        }
-
-        .login-card a {
-            color: var(--effective-link-color);
-            text-decoration: none;
-        }
-        .login-card a:hover {
-            text-decoration: underline;
-        }
-
-        /* Alert styles */
-        .alert {
-            background-color: var(--effective-card-bg);
-            border: 1px solid var(--effective-input-border);
-            color: var(--effective-text-color);
-        }
-        .alert-danger {
-            background-color: rgba(220, 53, 69, 0.1); /* Light red for light theme */
-            border-color: rgba(220, 53, 69, 0.3);
-            color: #b02a37;
-        }
-        html[data-theme="dark"] .alert-danger {
-            background-color: rgba(241, 112, 112, 0.15); /* Darker red bg for dark theme */
-            border-color: rgba(241, 112, 112, 0.4);
-            color: #f19494; /* Lighter red text for dark theme */
-        }
-         .alert-success {
-            background-color: rgba(25, 135, 84, 0.1);
-            border-color: rgba(25, 135, 84, 0.3);
-            color: #0f5132;
-        }
-        html[data-theme="dark"] .alert-success {
-            background-color: rgba(60, 158, 112, 0.15);
-            border-color: rgba(60, 158, 112, 0.4);
-            color: #78c8a0;
-        }
-         .alert-info {
-            background-color: rgba(13, 202, 240, 0.1);
-            border-color: rgba(13, 202, 240, 0.3);
-            color: #087990;
-        }
-        html[data-theme="dark"] .alert-info {
-            background-color: rgba(58, 176, 204, 0.15);
-            border-color: rgba(58, 176, 204, 0.4);
-            color: #85d1e7;
-        }
-        .btn-close {
-            filter: invert(0.5) sepia(1) saturate(0) hue-rotate(0deg); /* Default for light */
-        }
-        html[data-theme="dark"] .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%); /* White for dark theme */
-        }
-
-
     </style>
 </head>
 <body>
     <div class="login-card">
-        <div class="logo-placeholder"><span>P</span></div>
-        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+        <div class="logo-container">
+            <div class="logo-placeholder"><span>GS</span></div> {# Puedes cambiar GS por tus iniciales o un icono #}
+        </div>
+        <h3 class="text-center mb-4 fw-bold" style="color: var(--bs-primary);">Iniciar Sesión</h3>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -200,40 +109,44 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('login_page') }}">
             <div class="mb-3">
-                <label for="correo" class="form-label">Correo Electrónico</label>
-                <input type="email" class="form-control" id="correo" name="correo" required autofocus>
+                <label for="correo" class="form-label fw-medium">Correo Electrónico</label>
+                <input type="email" class="form-control" id="correo" name="correo" value="{{ request.form.get('correo', '') }}" required autofocus>
             </div>
             <div class="mb-3">
-                <label for="contrasena" class="form-label">Contraseña</label>
+                <label for="contrasena" class="form-label fw-medium">Contraseña</label>
                 <input type="password" class="form-control" id="contrasena" name="contrasena" required>
             </div>
-            <div class="d-grid">
+            {# Puedes añadir un "Recordarme" si lo deseas, asegúrate que el name="remember_me_html" coincida con app.py #}
+            {# <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember_me_html" name="remember_me_html" value="y">
+                <label class="form-check-label" for="remember_me_html">Recordarme</label>
+            </div> #}
+            <div class="d-grid mt-4">
                 <button type="submit" class="btn btn-primary btn-lg">Ingresar</button>
             </div>
         </form>
 
-        <p class="text-center mt-3">
-            ¿No tienes cuenta? <a href="{{ url_for('register') }}">Regístrate aquí</a>
+        <p class="text-center mt-3 mb-0">
+            <small>¿No tienes cuenta? <a href="{{ url_for('register_page') }}">Regístrate aquí</a></small>
         </p>
-        </div>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script>
-        // Theme toggling logic
-        function setTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
+        // Lógica para el toggle de tema (Modo Oscuro)
+        // Esta página no tiene el switch, pero aplicará el tema guardado o el preferido por el sistema.
+        const htmlElement = document.documentElement;
+        function applyTheme(theme) {
+            htmlElement.setAttribute('data-bs-theme', theme);
             localStorage.setItem('theme', theme);
-            // No toggle switch on this page, so no need to update its state
         }
-
-        // Initialize theme on page load
         let initialTheme = localStorage.getItem('theme');
         if (!initialTheme) {
             initialTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
-        setTheme(initialTheme);
+        applyTheme(initialTheme);
     </script>
 </body>
 </html>

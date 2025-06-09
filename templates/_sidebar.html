@@ -1,0 +1,62 @@
+<aside id="appSidebar" class="d-flex flex-column flex-shrink-0 p-3 text-white vh-100 position-fixed" style="width: var(--sidebar-width); background-color: var(--sidebar-bg, #074F69);">
+    <a href="{{ url_for('dashboard') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+        <i class="bi bi-gear-wide-connected fs-4 me-2"></i>
+        <span class="fs-4">Gestión Salesland</span>
+    </a>
+    <hr style="border-top: 1px solid var(--sidebar-hr-color, rgba(255,255,255,0.2));">
+    <ul class="nav nav-pills flex-column mb-auto">
+        {# --- Enlaces Comunes --- #}
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('dashboard') }}"
+               class="nav-link {% if request.endpoint == 'dashboard' %}active text-dark bg-light{% else %}text-white{% endif %}">
+                <i class="bi bi-house-door-fill me-2"></i>
+                Dashboard
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('ciclos_prorrateos_html.mostrar_formulario_ingreso_ciclos') }}"
+               class="nav-link {% if request.endpoint == 'ciclos_prorrateos_html.mostrar_formulario_ingreso_ciclos' %}active text-dark bg-light{% else %}text-white{% endif %}">
+                <i class="bi bi-pencil-square me-2"></i>
+                Registrar Contrato
+            </a>
+        </li>
+        <li class="nav-item mb-1">
+            <a href="{{ url_for('ciclos_prorrateos_html.ver_contratos_page') }}"
+               class="nav-link {% if request.endpoint == 'ciclos_prorrateos_html.ver_contratos_page' %}active text-dark bg-light{% else %}text-white{% endif %}">
+                <i class="bi bi-list-ul me-2"></i>
+                Ver Contratos
+            </a>
+        </li>
+
+        {# --- SECCIÓN DE ADMINISTRADOR ELIMINADA --- #}
+        
+    </ul>
+    <hr style="border-top: 1px solid var(--sidebar-hr-color, rgba(255,255,255,0.2));">
+    
+    {# --- Sección de Tema y Usuario --- #}
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <span class="text-white small">Modo Oscuro</span>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="themeToggleSwitch">
+        </div>
+    </div>
+
+    <div class="dropdown">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            {% set avatar_char = current_user.nombre_auditor[0] if current_user and current_user.is_authenticated and current_user.nombre_auditor else 'S' %}
+            <img src="https://via.placeholder.com/32/FFFFFF/074F69?text={{ avatar_char|upper }}" alt="User" width="32" height="32" class="rounded-circle me-2" style="border: 1px solid #FFFFFF;">
+            
+            {# CAMBIO: Se añadió text-truncate para evitar que el texto se salga #}
+            <strong class="text-truncate" title="{{ current_user.nombre_auditor if current_user and current_user.is_authenticated else 'Usuario' }}">
+                {{ current_user.nombre_auditor if current_user and current_user.is_authenticated else "Usuario" }}
+            </strong>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1" style="background-color: var(--sidebar-bg, #074F69); border: 1px solid var(--sidebar-hr-color, rgba(255,255,255,0.2));">
+            {% if current_user and current_user.is_authenticated %}
+            <li><span class="dropdown-item-text text-white-50">Rol: {{ current_user.rol }}</span></li>
+            <li><hr class="dropdown-divider" style="border-top: 1px solid var(--sidebar-hr-color, rgba(255,255,255,0.2));"></li>
+            {% endif %}
+            <li><a class="dropdown-item text-white" href="{{ url_for('logout_page') }}"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
+        </ul>
+    </div>
+</aside>

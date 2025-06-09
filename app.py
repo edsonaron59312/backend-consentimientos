@@ -1,464 +1,359 @@
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, request, jsonify # Se quitaron flash, render_template, redirect, url_for
-from flask_sqlalchemy import SQLAlchemy
-import json # Importado para el logging
-from datetime import datetime, date
-import time
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
-from apscheduler.schedulers.background import BackgroundScheduler
-import calendar
-from sqlalchemy import func, extract
-import pyodbc
-from functools import wraps
+# /backend-consentimientos/app.py
+
+# --- IMPORTACIONES ESENCIALES Y DE TERCEROS ---
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
+from flask_login import UserMixin, login_user, logout_user, login_required, current_user
 from flask_cors import CORS
+from flask_migrate import Migrate
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from datetime import datetime, date 
+import json
+import decimal
 
-# --- CONFIGURATION ---
-app = Flask(__name__)
-CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"])
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:@localhost/crud_python'
+# --- IMPORTA DESDE TU ARCHIVO extensions.py ---
+from extensions import db, login_manager
+
+# --- CONFIGURACIÓN DE LA APLICACIÓN FLASK ---
+app = Flask(__name__) # Por defecto, static_folder='static', static_url_path='/static'
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"])
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://evelasqueza:Sales2025$@172.23.8.7:1433/BDD_PROCESOS_DESARROLLO?driver=ODBC+Driver+17+for+SQL+Server'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'tu_clave_secreta_super_segura_cambiala_por_favor_2025_v3_api_final_logging_v2' # ¡CAMBIA ESTO!
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True 
+app.config['SECRET_KEY'] = 'clave_secreta_muy_fuerte_y_unica_para_produccion_v4_ciclos'
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = False # True para producción con HTTPS
 
-db = SQLAlchemy(app)
-login_manager = LoginManager()
+# --- INICIALIZACIÓN DE EXTENSIONES FLASK CON LA APP ---
+db.init_app(app)
 login_manager.init_app(app)
+login_manager.login_view = 'login_page' 
+login_manager.login_message = "Por favor, inicia sesión para acceder a esta página."
+login_manager.login_message_category = "info"
 
-# Google Sheets (Tu configuración...)
-SCOPE = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-CREDS = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', SCOPE)
-CLIENT = gspread.authorize(CREDS)
-SHEET_ID = '19F6sTYpNKHKaw7M6j4mpl0fgdLNB0nCotOXhvC52Tyg'
-SHEET_NAME = 'Hoja1'
+migrate = Migrate(app, db)
 
-# --- SQL Server Connection Details (Tu configuración...) ---
-SQL_SERVER_IP = '172.23.8.7'
-SQL_DATABASE_NAME = 'BD_PYC'
-SQL_USERNAME = 'evelasqueza'
-SQL_PASSWORD = 'Sales2025$'
-SQL_DRIVER = '{SQL Server}'
-
-
-# --- DATABASE MODELS ---
-class AuditorMovistar(UserMixin, db.Model):
-    __tablename__ = 'auditores_movistar'
+# --- MODELOS DE BASE DE DATOS ---
+class User(UserMixin, db.Model):
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    correo = db.Column(db.String(120), unique=True, nullable=False)
-    contrasena_hash = db.Column(db.String(256), nullable=False)
-    rol = db.Column(db.String(80), nullable=False, default='auditor')
-    nombre_completo = db.Column(db.String(150), nullable=False)
-    dni_auditor = db.Column(db.String(15), unique=True, nullable=False)
-    data_source = db.Column(db.String(10), nullable=False, default='sheet')
-    logs = db.relationship('LogAuditoria', backref='auditor_realizo_accion', lazy=True, foreign_keys='LogAuditoria.usuario_id')
+    nombre_auditor = db.Column(db.String(100), nullable=False)
+    dni_auditor = db.Column(db.String(20), unique=True, nullable=False)
+    correo = db.Column(db.String(100), unique=True, nullable=False)
+    contrasena_hash = db.Column(db.String(255), nullable=False)
+    rol = db.Column(db.String(20), nullable=False, default='auditor')
+    fecha_registro = db.Column(db.DateTime, default=datetime.utcnow)
+    ultimo_login = db.Column(db.DateTime, nullable=True)
+    activo = db.Column(db.Boolean, default=True)
 
     def set_password(self, contrasena):
-        self.contrasena_hash = generate_password_hash(contrasena, method='scrypt')
+        self.contrasena_hash = generate_password_hash(contrasena)
 
     def check_password(self, contrasena):
         return check_password_hash(self.contrasena_hash, contrasena)
 
-    def to_dict(self): 
-        return {
-            'id': self.id, 'correo': self.correo, 'rol': self.rol,
-            'nombre_completo': self.nombre_completo, 'dni_auditor': self.dni_auditor,
-            'data_source': self.data_source
-        }
-    def __repr__(self): return f'<Auditor {self.correo}>'
-
-class EscuchaMovistar(db.Model):
-    __tablename__ = 'escuchas_movistar'
-    id = db.Column(db.Integer, primary_key=True)
-    telefono = db.Column(db.String(20))
-    dni_asesor = db.Column(db.String(15))
-    asesor = db.Column(db.String(150))
-    campana = db.Column(db.String(100))
-    supervisor = db.Column(db.String(150))
-    coordinador = db.Column(db.String(150))
-    tipifica_bien = db.Column(db.String(10))
-    cliente_desiste = db.Column(db.String(10))
-    observaciones = db.Column(db.Text, nullable=True)
-    dni_auditor = db.Column(db.String(15)) # DNI del auditor que registró la escucha
-    nombre_auditor = db.Column(db.String(150)) # Nombre del auditor que registró la escucha
-    fecha_registro = db.Column(db.TIMESTAMP, server_default=db.func.now())
-    
     def to_dict(self):
         return {
-            'id': self.id, 'telefono': self.telefono, 'dni_asesor': self.dni_asesor,
-            'asesor': self.asesor, 'campana': self.campana, 'supervisor': self.supervisor,
-            'coordinador': self.coordinador, 'tipifica_bien': self.tipifica_bien,
-            'cliente_desiste': self.cliente_desiste, 'observaciones': self.observaciones,
-            'dni_auditor': self.dni_auditor, 'nombre_auditor': self.nombre_auditor,
-            'fecha_registro': self.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_registro else None
+            "id": self.id,
+            "nombre_auditor": self.nombre_auditor,
+            "nombre_completo": self.nombre_auditor,
+            "dni_auditor": self.dni_auditor,
+            "correo": self.correo,
+            "rol": self.rol,
+            "fecha_registro": self.fecha_registro.isoformat() if self.fecha_registro else None,
+            "ultimo_login": self.ultimo_login.isoformat() if self.ultimo_login else None,
+            "activo": self.activo
         }
 
 class LogAuditoria(db.Model):
-    __tablename__ = 'logs_auditoria'
+    __tablename__ = 'log_auditoria'
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
-    usuario_id = db.Column(db.Integer, db.ForeignKey('auditores_movistar.id'), nullable=True)
-    nombre_usuario = db.Column(db.String(150), nullable=True)
-    correo_usuario = db.Column(db.String(120), nullable=True)
-    rol_usuario = db.Column(db.String(80), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    user_nombre = db.Column(db.String(100), nullable=True)
     accion = db.Column(db.String(255), nullable=False)
-    entidad_afectada = db.Column(db.String(100), nullable=True)
-    id_entidad_afectada = db.Column(db.String(50), nullable=True)
-    detalles_anteriores = db.Column(db.Text, nullable=True)
-    detalles_nuevos = db.Column(db.Text, nullable=True)
+    detalle = db.Column(db.Text, nullable=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     direccion_ip = db.Column(db.String(45), nullable=True)
-    user_agent = db.Column(db.Text, nullable=True)
+    user = db.relationship('User', backref=db.backref('logs_auditoria', lazy='dynamic'))
 
-    def __repr__(self): return f'<Log {self.id} - {self.accion} por {self.nombre_usuario} en {self.timestamp}>'
     def to_dict(self):
+        # ... (igual que antes)
         return {
-            'id': self.id,
-            'timestamp': self.timestamp.isoformat() + 'Z' if self.timestamp else None,
-            'usuario_id': self.usuario_id, 'nombre_usuario': self.nombre_usuario,
-            'correo_usuario': self.correo_usuario, 'rol_usuario': self.rol_usuario,
-            'accion': self.accion, 'entidad_afectada': self.entidad_afectada,
-            'id_entidad_afectada': self.id_entidad_afectada,
-            'detalles_anteriores': json.loads(self.detalles_anteriores) if self.detalles_anteriores else None,
-            'detalles_nuevos': json.loads(self.detalles_nuevos) if self.detalles_nuevos else None,
-            'direccion_ip': self.direccion_ip, 'user_agent': self.user_agent
+            'id': self.id, 'user_id': self.user_id, 'user_nombre': self.user_nombre,
+            'accion': self.accion, 'detalle': self.detalle,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'direccion_ip': self.direccion_ip
         }
+
+from models.prorrateo_models import CicloDisponible, Plan, ContratoProrrateo
+from routes.api_contratos import api_contratos_bp
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(AuditorMovistar, int(user_id))
+    return db.session.get(User, int(user_id))
 
-@login_manager.unauthorized_handler
-def unauthorized():
-    return jsonify(success=False, message="Autenticación requerida para acceder a este recurso."), 401
-
-# --- FUNCIÓN HELPER PARA LOGGING ---
-def registrar_log_auditoria(accion, entidad_afectada=None, id_entidad_afectada=None, detalles_anteriores=None, detalles_nuevos=None, correo_intento_login=None):
-    try:
-        log_entry = LogAuditoria(
-            accion=str(accion).upper(),
-            entidad_afectada=str(entidad_afectada) if entidad_afectada else None,
-            id_entidad_afectada=str(id_entidad_afectada) if id_entidad_afectada else None,
-            detalles_anteriores=json.dumps(detalles_anteriores, ensure_ascii=False, default=str) if detalles_anteriores else None,
-            detalles_nuevos=json.dumps(detalles_nuevos, ensure_ascii=False, default=str) if detalles_nuevos else None,
-            direccion_ip=request.remote_addr,
-            user_agent=request.user_agent.string if request.user_agent else None
-        )
-        if current_user and current_user.is_authenticated:
-            log_entry.usuario_id = current_user.id
-            log_entry.nombre_usuario = current_user.nombre_completo
-            log_entry.correo_usuario = current_user.correo
-            log_entry.rol_usuario = current_user.rol
-        elif correo_intento_login: 
-             log_entry.correo_usuario = correo_intento_login
-
-        db.session.add(log_entry)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        print(f"!!! ERROR al registrar log de auditoría para la acción {accion}: {e} !!!")
-
-
-# --- CACHE & HELPER FUNCTIONS ---
-advisor_cache = {}
-def load_advisor_cache(): 
-    global advisor_cache
-    try:
-        start_time = time.time()
-        sheet = CLIENT.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
-        all_values = sheet.get_all_values()
-        new_cache = {}
-        if len(all_values) > 1:
-            for row_idx, row in enumerate(all_values[1:]):
-                 data_len = len(row)
-                 if data_len > 0 and row[0]:
-                     dni = row[0].strip()
-                     if not dni: continue
-                     asesor = f"{row[1]} {row[2]}".strip() if data_len > 2 else "N/A"
-                     supervisor = row[13] if data_len > 13 else "N/A"
-                     coordinador = row[16] if data_len > 16 else "N/A"
-                     campana = row[17] if data_len > 17 else "N/A"
-                     new_cache[dni] = { 'asesor': asesor, 'supervisor': supervisor, 'coordinador': coordinador, 'campana': campana }
-            advisor_cache = new_cache
-            print(f"Caché de Google Sheet cargada. Asesores en caché: {len(advisor_cache)}.")
-        else: print("No se encontraron datos en Google Sheets para la caché (o solo encabezado).")
-    except Exception as e:
-        print(f"ERROR FATAL: No se pudo cargar la caché de asesores (Google Sheet): {e}")
-        advisor_cache = {}
-
-def get_advisor_data_from_sheet(dni): return advisor_cache.get(dni)
-
-def admin_required_api(f): 
+def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not current_user.is_authenticated or current_user.rol != 'admin':
-            return jsonify(success=False, message="Acceso denegado. Se requieren permisos de administrador."), 403
+            flash("Acceso no autorizado. Se requiere rol de administrador.", "danger")
+            return redirect(url_for('login_page'))
         return f(*args, **kwargs)
     return decorated_function
 
-# --- FLASK API ROUTES ---
+def admin_required_api(f):
+    # ... (igual que antes)
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return jsonify(success=False, message="Autenticación requerida."), 401
+        if current_user.rol != 'admin':
+            return jsonify(success=False, message="Acceso no autorizado. Se requiere rol de administrador."), 403
+        return f(*args, **kwargs)
+    return decorated_function
+
+def registrar_log(accion, detalle=None, user_obj=None):
+    # ... (igual que antes, considera añadir app.app_context() si da errores fuera de request)
+    try:
+        ip_addr = request.remote_addr if request else None
+        usuario_actual_obj = user_obj if user_obj else (current_user if current_user.is_authenticated else None)
+        nombre_usuario_log = usuario_actual_obj.nombre_auditor if usuario_actual_obj else "Sistema"
+        id_usuario_log = usuario_actual_obj.id if usuario_actual_obj else None
+        detalle_json = json.dumps(detalle, ensure_ascii=False, default=str) if detalle is not None else None
+        log_entry = LogAuditoria(user_id=id_usuario_log, user_nombre=nombre_usuario_log, accion=accion, detalle=detalle_json, direccion_ip=ip_addr)
+        db.session.add(log_entry)
+        db.session.commit()
+    except Exception as e:
+        print(f"!!! Error Crítico al registrar log de auditoría: {e} !!!")
+        db.session.rollback() # Es buena idea hacer rollback aquí
+
+# --- IMPORTACIÓN Y REGISTRO DE BLUEPRINTS ---
+from routes.ciclos_prorrateos_routes import ciclos_prorrateos_bp
+# SUGERENCIA: Si 'ciclos_prorrateos_bp' sirve principalmente páginas HTML, considera un prefijo como '/formularios' en lugar de '/api'.
+# Ejemplo: app.register_blueprint(ciclos_prorrateos_bp, url_prefix='/formularios/ciclos')
+# El prefijo actual '/api/ciclos-prorrateos' funciona, pero es menos convencional para HTML.
+app.register_blueprint(ciclos_prorrateos_bp, url_prefix='/api/ciclos-prorrateos') 
+
+# --- RUTAS DE TU APLICACIÓN (LOGIN, DASHBOARD, ETC.) ---
+@app.route('/')
+def home_redirect():
+    # ... (igual que antes)
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login_page'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login_page():
+    # ... (igual que antes)
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        correo = request.form.get('correo')
+        contrasena = request.form.get('contrasena')
+        user = User.query.filter_by(correo=correo).first()
+        if user and user.check_password(contrasena):
+            if user.activo:
+                remember_me = request.form.get('remember_me_html') == 'y' 
+                login_user(user, remember=remember_me)
+                user.ultimo_login = datetime.utcnow()
+                db.session.commit()
+                registrar_log("INICIO_SESION_EXITOSO_HTML", {"usuario": user.correo})
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('dashboard'))
+            else:
+                flash('Tu cuenta está desactivada. Contacta al administrador.', 'warning')
+                registrar_log("INICIO_SESION_FALLIDO_HTML", {"usuario": correo, "motivo": "Cuenta desactivada"})
+        else:
+            flash('Credenciales incorrectas. Por favor, inténtalo de nuevo.', 'danger')
+            registrar_log("INICIO_SESION_FALLIDO_HTML", {"usuario": correo, "motivo": "Credenciales incorrectas"})
+        return redirect(url_for('login_page'))
+    return render_template('login.html')
+
 @app.route('/api/login', methods=['POST'])
 def api_login():
+    # ... (igual que antes)
     if current_user.is_authenticated:
-        return jsonify(success=True, message="Ya estás autenticado.", user=current_user.to_dict())
+         return jsonify(success=True, message="Ya estás logueado.", user=current_user.to_dict())
     data = request.get_json()
     if not data: return jsonify(success=False, message="No se recibieron datos JSON."), 400
     correo = data.get('correo')
     contrasena = data.get('contrasena')
     if not correo or not contrasena: return jsonify(success=False, message="Correo y contraseña son requeridos."), 400
-    
-    auditor_user = AuditorMovistar.query.filter_by(correo=correo).first()
-    if auditor_user and auditor_user.check_password(contrasena):
-        login_user(auditor_user, remember=True)
-        registrar_log_auditoria(accion="LOGIN_EXITOSO") 
-        return jsonify(success=True, message='Inicio de sesión exitoso.', user=current_user.to_dict())
+    user = User.query.filter_by(correo=correo).first()
+    if user and user.check_password(contrasena):
+        if user.activo:
+            login_user(user, remember=data.get('remember_me', False))
+            user.ultimo_login = datetime.utcnow()
+            db.session.commit()
+            registrar_log("API_INICIO_SESION_EXITOSO", {"usuario": user.correo})
+            return jsonify(success=True, message="Login exitoso", user=user.to_dict())
+        else:
+            registrar_log("API_INICIO_SESION_FALLIDO", {"usuario": correo, "motivo": "Cuenta desactivada"})
+            return jsonify(success=False, message='Tu cuenta está desactivada. Contacta al administrador.'), 403
     else:
-        registrar_log_auditoria(accion="LOGIN_FALLIDO", correo_intento_login=correo) 
-        return jsonify(success=False, message='Correo o contraseña incorrectos.'), 401
+        registrar_log("API_INICIO_SESION_FALLIDO", {"usuario": correo, "motivo": "Credenciales incorrectas"})
+        return jsonify(success=False, message='Credenciales incorrectas.'), 401
+
+@app.route('/logout')
+@login_required
+def logout_page():
+    # ... (igual que antes)
+    if current_user.is_authenticated: # Esta verificación es redundante por @login_required pero no daña
+        registrar_log("CIERRE_SESION_HTML", {"usuario_id": current_user.id, "usuario_correo": current_user.correo})
+    logout_user()
+    flash('Has cerrado sesión exitosamente.', 'success')
+    return redirect(url_for('login_page'))
 
 @app.route('/api/logout', methods=['POST'])
 @login_required
 def api_logout():
-    registrar_log_auditoria(accion="LOGOUT") 
+    # ... (igual que antes)
+    if current_user.is_authenticated:
+        registrar_log("API_CIERRE_SESION", {"usuario_id": current_user.id, "usuario_correo": current_user.correo})
     logout_user()
-    return jsonify(success=True, message='Has cerrado sesión.')
+    return jsonify(success=True, message="Cierre de sesión exitoso.")
 
-@app.route('/api/check_session')
-@login_required
-def api_check_session(): return jsonify(success=True, user=current_user.to_dict())
+@app.route('/api/check_session', methods=['GET'])
+def check_session():
+    # ... (igual que antes)
+    if current_user.is_authenticated:
+        return jsonify(success=True, user=current_user.to_dict())
+    else:
+        return jsonify(success=False, message="No hay sesión activa."), 401
 
-@app.route('/api/records')
+@app.route('/register', methods=['GET', 'POST'])
+def register_page():
+    # ... (igual que antes)
+    if current_user.is_authenticated:
+        flash("Ya tienes una sesión activa.", "info")
+        return redirect(url_for('dashboard'))
+    if request.method == 'POST':
+        nombre_auditor = request.form.get('nombre_auditor')
+        dni_auditor = request.form.get('dni_auditor')
+        correo = request.form.get('correo')
+        contrasena = request.form.get('contrasena')
+        confirmar_contrasena = request.form.get('confirmar_contrasena')
+        rol = request.form.get('rol', 'auditor')
+        if not all([nombre_auditor, dni_auditor, correo, contrasena, confirmar_contrasena]):
+            flash('Todos los campos son obligatorios.', 'danger')
+            return render_template('register.html', form_data=request.form)
+        if contrasena != confirmar_contrasena:
+            flash('Las contraseñas no coinciden.', 'danger')
+            return render_template('register.html', form_data=request.form)
+        existing_user_email = User.query.filter_by(correo=correo).first()
+        if existing_user_email:
+            flash('El correo electrónico ya está registrado.', 'warning')
+            return render_template('register.html', form_data=request.form)
+        existing_user_dni = User.query.filter_by(dni_auditor=dni_auditor).first()
+        if existing_user_dni:
+            flash('El DNI del auditor ya está registrado.', 'warning')
+            return render_template('register.html', form_data=request.form)
+        new_user = User(nombre_auditor=nombre_auditor, dni_auditor=dni_auditor, correo=correo, rol=rol)
+        new_user.set_password(contrasena)
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            registrado_por_info = "Sistema (auto-registro)"
+            registrar_log("REGISTRO_USUARIO_NUEVO", {"nuevo_usuario_correo": new_user.correo, "registrado_por": registrado_por_info})
+            flash('Usuario registrado exitosamente. Ahora puede iniciar sesión.', 'success')
+            return redirect(url_for('login_page'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al registrar el usuario: {str(e)}', 'danger')
+            registrar_log("REGISTRO_USUARIO_FALLIDO", {"error": str(e), "datos_entrada": {"correo": correo, "dni": dni_auditor}})
+            return render_template('register.html', form_data=request.form)
+    return render_template('register.html')
+
+@app.route('/dashboard')
 @login_required
-def api_records(): 
-    records_data = []
+def dashboard():
+    # ... (igual que antes)
     try:
-        query = EscuchaMovistar.query
-        if current_user.rol == 'auditor': 
-            query = query.filter_by(dni_auditor=str(current_user.dni_auditor))
-        records = query.order_by(EscuchaMovistar.id.desc()).all()
-        records_data = [r.to_dict() for r in records]
-        return jsonify(success=True, records=records_data)
+        return render_template('dashboard.html', current_user=current_user)
     except Exception as e:
-        print(f"!!! [API /api/records] ERROR al obtener registros: {e} !!!")
-        return jsonify(success=False, message=f"Error al cargar registros: {str(e)}"), 500
+        flash(f"Error al cargar el dashboard: {str(e)}", "danger")
+        return redirect(url_for('login_page'))
 
-@app.route('/api/advisor/sheet/<dni>')
+@app.route('/manage_users')
 @login_required
-def api_get_advisor_from_sheet_json(dni): 
-    data = get_advisor_data_from_sheet(dni)
-    if data: return jsonify(data)
-    else: return jsonify({'error': 'DNI no encontrado en Google Sheet'}), 404
+@admin_required
+def manage_users_page():
+    # ... (igual que antes)
+    users = User.query.order_by(User.nombre_auditor).all()
+    return render_template('manage_users.html', users=users, current_user=current_user)
 
-@app.route('/api/advisor/sql/<dni>')
-@login_required
-def api_get_sql_advisor_data_json(dni): 
-    conn = None
-    try:
-        conn_str = ( f'DRIVER={SQL_DRIVER};SERVER={SQL_SERVER_IP};DATABASE={SQL_DATABASE_NAME};UID={SQL_USERNAME};PWD={SQL_PASSWORD};' )
-        conn = pyodbc.connect(conn_str, timeout=5)
-        cursor = conn.cursor()
-        query = "SELECT Nombres_Agente, Apellidos_Agente, Plataforma, Supervisor FROM TB_Maestra_General_Multicuentas WHERE DOC_agente = ?"
-        cursor.execute(query, dni)
-        row = cursor.fetchone()
-        if row:
-            asesor_nombre = row.Nombres_Agente if row.Nombres_Agente else ""
-            asesor_apellido = row.Apellidos_Agente if row.Apellidos_Agente else ""
-            data = { 'asesor': f"{asesor_nombre} {asesor_apellido}".strip(), 'campana': row.Plataforma if row.Plataforma else "N/A", 'supervisor': row.Supervisor if row.Supervisor else "N/A", 'coordinador': "Marjorie Landa Temoche" }
-            return jsonify(data)
-        else: return jsonify({'error': 'DNI no encontrado en la base de datos SQL'}), 404
-    except pyodbc.Error as ex:
-        sqlstate = ex.args[0]
-        print(f"!!! [API SQL DNI Search] Error de PyODBC ({sqlstate}): {ex} !!!")
-        return jsonify({'error': f'Error de base de datos: {str(ex)}'}), 500
-    except Exception as e:
-        print(f"!!! [API SQL DNI Search] Error inesperado: {e} !!!")
-        return jsonify({'error': f'Error inesperado del servidor: {str(e)}'}), 500
-    finally:
-        if conn: conn.close()
-
-@app.route('/api/submit', methods=['POST'])
-@login_required
-def api_submit_form():
-    try:
-        data = request.get_json()
-        if not data: return jsonify(success=False, message="No se recibieron datos JSON."), 400
-        new_record = EscuchaMovistar(
-            telefono=data.get('telefono'), dni_asesor=data.get('dni_asesor'),
-            asesor=data.get('asesor'), campana=data.get('campana'),
-            supervisor=data.get('supervisor'), coordinador=data.get('coordinador'),
-            tipifica_bien=data.get('tipifica_bien'), cliente_desiste=data.get('cliente_desiste'),
-            observaciones=data.get('observaciones'), dni_auditor=current_user.dni_auditor,
-            nombre_auditor=current_user.nombre_completo )
-        db.session.add(new_record)
-        db.session.commit()
-        registrar_log_auditoria(
-            accion="CREACION_REGISTRO_ESCUCHA",
-            entidad_afectada="EscuchaMovistar",
-            id_entidad_afectada=new_record.id,
-            detalles_nuevos=new_record.to_dict()
-        )
-        return jsonify({'success': True, 'message': 'Registro guardado.', 'record': new_record.to_dict()})
-    except Exception as e:
-        db.session.rollback()
-        print(f"!!! [API /api/submit] Error saving to DB: {e} !!!")
-        registrar_log_auditoria(accion="ERROR_CREACION_REGISTRO_ESCUCHA", detalles_nuevos={'error': str(e), 'data_enviada': data})
-        return jsonify({'success': False, 'message': f'Error al guardar: {str(e)}'}), 500
-
-@app.route('/api/dashboard_data')
-@login_required
-def api_dashboard_data(): 
-    try:
-        current_dt = datetime.now()
-        year = int(request.args.get('year', current_dt.year))
-        month = int(request.args.get('month', current_dt.month))
-        _, num_days = calendar.monthrange(year, month)
-        meses_espanol = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
-        dias_semana_es_corto = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
-        month_name_str = meses_espanol[month] 
-        days_in_month_data_list = [] 
-        for d_num in range(1, num_days + 1):
-            try:
-                current_day_date = date(year, month, d_num)
-                day_of_week_num = current_day_date.weekday()
-                days_in_month_data_list.append({ 'day_num': d_num, 'day_name_short': dias_semana_es_corto[day_of_week_num], 'is_sunday': (day_of_week_num == 6) })
-            except ValueError as ve:
-                print(f"Error creando fecha para el día {d_num}/{month}/{year}: {ve}")
-                continue
-        start_date = datetime(year, month, 1)
-        if month == 12: end_date = datetime(year + 1, 1, 1)
-        else: end_date = datetime(year, month + 1, 1)
-        
-        dashboard_summary_data = {} 
-        auditor_totals_data = {} 
-        total_records_month_count = 0 
-        
-        auditors_query = AuditorMovistar.query
-        if current_user.rol == 'auditor':
-            auditors_query = auditors_query.filter_by(id=current_user.id)
-        
-        auditors_for_dashboard_list = auditors_query.order_by(AuditorMovistar.nombre_completo).all()
-
-        for auditor_obj in auditors_for_dashboard_list:
-            dashboard_summary_data[auditor_obj.nombre_completo] = {day_info['day_num']: 0 for day_info in days_in_month_data_list}
-            auditor_totals_data[auditor_obj.nombre_completo] = 0
-
-        base_query = EscuchaMovistar.query.filter(EscuchaMovistar.fecha_registro.between(start_date, end_date))
-        if current_user.rol == 'auditor':
-            base_query = base_query.filter(EscuchaMovistar.dni_auditor == current_user.dni_auditor)
-
-        results = base_query.with_entities(
-            EscuchaMovistar.nombre_auditor, 
-            extract('day', EscuchaMovistar.fecha_registro).label('day'), 
-            func.count(EscuchaMovistar.id).label('count')
-        ).group_by(
-            EscuchaMovistar.nombre_auditor, 
-            extract('day', EscuchaMovistar.fecha_registro)
-        ).all()
-            
-        for row in results:
-            auditor_name = row.nombre_auditor
-            day = int(row.day)
-            count = int(row.count)
-            if auditor_name in dashboard_summary_data:
-                if day in dashboard_summary_data[auditor_name]: 
-                    dashboard_summary_data[auditor_name][day] = count
-                auditor_totals_data[auditor_name] += count
-            if current_user.rol == 'admin' or (current_user.rol == 'auditor' and auditor_name == current_user.nombre_completo):
-                 total_records_month_count += count
-        return jsonify(
-            success=True, dashboard_data=dashboard_summary_data, days_in_month_data=days_in_month_data_list,
-            month_name=month_name_str, year_processed=year, month_processed=month, 
-            auditor_totals=auditor_totals_data, total_records_month=total_records_month_count,
-            num_auditors_processed=len(auditors_for_dashboard_list)
-        )
-    except Exception as e:
-        print(f"!!! [API /api/dashboard_data] ERROR: {e} !!!")
-        return jsonify(success=False, message=f"Ocurrió un error al cargar datos del dashboard: {str(e)}"), 500
-
-@app.route('/api/users')
+@app.route('/api/users', methods=['GET'])
 @login_required
 @admin_required_api
-def api_get_users(): 
+def api_get_users():
+    # ... (igual que antes)
     try:
-        users = AuditorMovistar.query.order_by(AuditorMovistar.nombre_completo).all()
-        users_data = [user.to_dict() for user in users]
-        return jsonify(success=True, users=users_data)
+        users = User.query.order_by(User.nombre_auditor).all()
+        return jsonify(success=True, users=[user.to_dict() for user in users])
     except Exception as e:
-        print(f"!!! [API /api/users] ERROR: {e} !!!")
+        registrar_log("ERROR_API_GET_USERS", {"error": str(e)})
         return jsonify(success=False, message=f"Error al obtener usuarios: {str(e)}"), 500
+
+@app.route('/api/users/<int:user_id>/toggle_active', methods=['POST'])
+@login_required
+@admin_required_api
+def api_toggle_user_active(user_id):
+    # ... (igual que antes)
+    user_to_toggle = db.session.get(User, user_id)
+    if not user_to_toggle: return jsonify(success=False, message="Usuario no encontrado."), 404
+    if user_to_toggle.id == current_user.id: return jsonify(success=False, message="No puedes cambiar tu propio estado de activación."), 403
+    user_to_toggle.activo = not user_to_toggle.activo
+    action = "USUARIO_ACTIVADO" if user_to_toggle.activo else "USUARIO_DESACTIVADO"
+    try:
+        db.session.commit()
+        registrar_log(action, {"usuario_afectado_id": user_to_toggle.id, "usuario_afectado_correo": user_to_toggle.correo, "admin_id": current_user.id})
+        return jsonify(success=True, message=f"Usuario {('activado' if user_to_toggle.activo else 'desactivado')} correctamente.", new_status=user_to_toggle.activo)
+    except Exception as e:
+        db.session.rollback()
+        registrar_log(f"{action}_FALLIDO", {"error": str(e), "usuario_afectado_id": user_to_toggle.id})
+        return jsonify(success=False, message=f"Error al cambiar estado del usuario: {str(e)}"), 500
 
 @app.route('/api/users/<int:user_id>/change_role', methods=['POST'])
 @login_required
 @admin_required_api
 def api_change_user_role(user_id):
-    user_to_change = db.session.get(AuditorMovistar, user_id)
+    # ... (igual que antes)
+    user_to_change = db.session.get(User, user_id)
+    if not user_to_change: return jsonify(success=False, message="Usuario no encontrado."), 404
     data = request.get_json()
-    if not data: return jsonify(success=False, message="No se recibieron datos JSON."), 400
     new_role = data.get('new_role')
-
-    if not user_to_change: return jsonify(success=False, message='Usuario no encontrado.'), 404
-    if new_role not in ['admin', 'auditor']: return jsonify(success=False, message='Rol no válido.'), 400
-
-    admin_count = AuditorMovistar.query.filter_by(rol='admin').count()
-    if (user_to_change.id == current_user.id and user_to_change.rol == 'admin' and new_role == 'auditor' and admin_count <= 1):
-        return jsonify(success=False, message='No puedes quitarte el rol de administrador si eres el único.'), 403
-    
-    old_role_details = {'rol_anterior': user_to_change.rol} 
+    if not new_role or new_role not in ['admin', 'auditor']: return jsonify(success=False, message="Rol inválido. Roles permitidos: 'admin', 'auditor'."), 400
+    if user_to_change.id == current_user.id and new_role != 'admin': return jsonify(success=False, message="No puedes quitarte tu propio rol de administrador."), 403
+    old_role = user_to_change.rol
+    user_to_change.rol = new_role
     try:
-        user_to_change.rol = new_role
         db.session.commit()
-        registrar_log_auditoria(
-            accion="CAMBIO_ROL_USUARIO",
-            entidad_afectada="AuditorMovistar",
-            id_entidad_afectada=user_to_change.id,
-            detalles_anteriores=old_role_details,
-            detalles_nuevos={'rol_nuevo': new_role, 'correo_afectado': user_to_change.correo}
-        )
-        return jsonify(success=True, message=f'Rol de {user_to_change.nombre_completo} cambiado a {new_role}.', user=user_to_change.to_dict())
+        registrar_log("CAMBIO_ROL_USUARIO", {"usuario_afectado_id": user_to_change.id, "usuario_afectado_correo": user_to_change.correo, "rol_anterior": old_role, "rol_nuevo": new_role, "admin_id": current_user.id})
+        return jsonify(success=True, message="Rol de usuario cambiado correctamente.", new_role=user_to_change.rol)
     except Exception as e:
         db.session.rollback()
-        registrar_log_auditoria(accion="ERROR_CAMBIO_ROL_USUARIO", id_entidad_afectada=user_id, detalles_nuevos={'error': str(e), 'rol_intentado': new_role})
-        return jsonify(success=False, message=f'Error al cambiar el rol: {str(e)}'), 500
+        registrar_log("CAMBIO_ROL_USUARIO_FALLIDO", {"error": str(e), "usuario_afectado_id": user_to_change.id})
+        return jsonify(success=False, message=f"Error al cambiar rol del usuario: {str(e)}"), 500
 
-# +++ NUEVA RUTA PARA OBTENER LOGS DE AUDITORÍA +++
 @app.route('/api/audit_logs')
 @login_required
 @admin_required_api
 def api_get_audit_logs():
+    # ... (igual que antes)
     try:
-        # Opcional: Añadir paginación
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 50, type=int) # 50 logs por página por defecto
-
+        per_page = request.args.get('per_page', 15, type=int)
         logs_query = LogAuditoria.query.order_by(LogAuditoria.timestamp.desc())
-        
-        # Aplicar paginación
         paginated_logs = logs_query.paginate(page=page, per_page=per_page, error_out=False)
         logs_data = [log.to_dict() for log in paginated_logs.items]
-        
-        return jsonify(
-            success=True, 
-            logs=logs_data,
-            total_logs=paginated_logs.total,
-            current_page=paginated_logs.page,
-            total_pages=paginated_logs.pages,
-            per_page=paginated_logs.per_page
-        )
+        return jsonify(success=True, logs=logs_data, total_logs=paginated_logs.total, current_page=paginated_logs.page, total_pages=paginated_logs.pages, per_page=paginated_logs.per_page)
     except Exception as e:
         print(f"!!! [API /api/audit_logs] ERROR: {e} !!!")
+        registrar_log("ERROR_API_AUDIT_LOGS", {"error": str(e)})
         return jsonify(success=False, message=f"Error al obtener logs de auditoría: {str(e)}"), 500
 
-# --- RUN FLASK APP ---
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all() 
-        load_advisor_cache()
+# --- EJECUCIÓN DE LA APLICACIÓN FLASK ---
+app.register_blueprint(api_contratos_bp)
 
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(func=load_advisor_cache, trigger="interval", minutes=15)
-    scheduler.start()
-
-    import atexit
-    atexit.register(lambda: scheduler.shutdown())
-
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    # Considera usar variables de entorno para debug y port en producción
+    app.run(debug=True, host='0.0.0.0', port=5000) # Ahora accesible desde la red local.

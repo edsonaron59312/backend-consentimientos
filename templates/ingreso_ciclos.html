@@ -1,0 +1,389 @@
+{% extends "base_main_layout.html" %}
+
+{% block title %}
+    {% if contrato_id_being_edited %}
+        Editar Contrato ID: {{ contrato_id_being_edited }}
+    {% else %}
+        Ingreso de Ciclos y Prorrateos
+    {% endif %}
+    - Gestión Salesland
+{% endblock %}
+
+{% block head_extra_css %}
+<style>
+body, main, .content, .wrapper, .content-wrapper, .page-content {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+    .card-form-ingreso {
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: 0 !important;
+        margin-bottom: 12px !important;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+    .fieldset-custom-ingreso {
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        padding: 0.6rem 0.8rem 0.7rem 0.8rem;
+        margin-bottom: 0.7rem;
+    }
+    .fieldset-custom-ingreso legend {
+        padding-bottom: 0.4rem;
+        font-size: 1.08rem;
+        font-weight: 600;
+        color: #0a3556;
+        border-bottom: 2px solid #0a3556;
+        margin-bottom: 1rem;
+        display: inline-block;
+        width: auto;
+        letter-spacing: 0.5px;
+    }
+    .form-label {
+        margin-bottom: 0.25rem;
+        font-size: 0.89rem;
+        font-weight: 500;
+        color: #1a202c;
+        letter-spacing: 0.2px;
+    }
+    .form-control-sm, .form-select-sm {
+        font-size: .97rem !important;
+        padding: .32rem .6rem !important;
+        height: calc(1.6em + .6rem + 2px);
+        border-radius: 0.35rem;
+        border: 1.3px solid #cbd5e1;
+        background: #f8fafc;
+        color: #222;
+        box-shadow: none;
+        transition: border 0.2s, background 0.2s;
+    }
+    .form-control-sm:focus, .form-select-sm:focus {
+        border-color: #2563eb;
+        background: #fff;
+        outline: none;
+        box-shadow: 0 0 0 2px #60a5fa33;
+    }
+    .btn-ingreso-custom {
+        background-color: #074F69;
+        border-color: #074F69;
+        color: white;
+        font-weight: 500;
+        padding: 0.6rem 1.2rem;
+        font-size: 0.97rem;
+        border-radius: 0.35rem;
+        box-shadow: 0 2px 8px rgba(7,79,105,0.07);
+        transition: background 0.2s, border 0.2s, transform 0.1s;
+    }
+    .btn-ingreso-custom:hover {
+        background-color: #053a4e;
+        border-color: #053a4e;
+        transform: translateY(-2px);
+        color: white;
+    }
+    /* Modo Oscuro Mejorado */
+    [data-bs-theme="dark"] .card-form-ingreso {
+        background: rgba(30, 41, 59, 0.97);
+        border: 1.5px solid #334155;
+        box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+    }
+    [data-bs-theme="dark"] .fieldset-custom-ingreso {
+        background: rgba(38,50,56,0.89);
+        border: 1.5px solid #475569;
+        box-shadow: 0 2px 18px rgba(0,0,0,0.18);
+    }
+    [data-bs-theme="dark"] .fieldset-custom-ingreso legend {
+        color: #60a5fa;
+        border-bottom-color: #60a5fa;
+    }
+    [data-bs-theme="dark"] .form-label {
+        color: #e0e7ef;
+    }
+    [data-bs-theme="dark"] .form-control-sm, [data-bs-theme="dark"] .form-select-sm {
+        background: #232b36;
+        color: #e0e7ef;
+        border: 1.3px solid #475569;
+    }
+    [data-bs-theme="dark"] .form-control-sm:focus, [data-bs-theme="dark"] .form-select-sm:focus {
+        border-color: #60a5fa;
+        background: #1e293b;
+        box-shadow: 0 0 0 2px #60a5fa33;
+    }
+    [data-bs-theme="dark"] .btn-ingreso-custom {
+        background-color: #5096dc;
+        border-color: #5096dc;
+        color: #07273d;
+    }
+    [data-bs-theme="dark"] .btn-ingreso-custom:hover {
+        background-color: #2563eb;
+        border-color: #2563eb;
+        color: #fff;
+    }
+    .fieldset-custom-ingreso legend {
+        padding-bottom: 0.4rem;
+        font-size: 1.05rem; 
+        font-weight: 600; 
+        color: #074F69; 
+        border-bottom: 2px solid #074F69; 
+        margin-bottom: 1rem; 
+        display: inline-block;
+        width: auto;
+    }
+    .btn-ingreso-custom { 
+        background-color: #074F69; border-color: #074F69; color: white;
+        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        font-weight: 500; padding: 0.6rem 1.2rem; font-size: 0.95rem; 
+    }
+    .btn-ingreso-custom:hover { background-color: #053a4e; border-color: #053a4e; transform: translateY(-2px); color: white; }
+    .form-label { margin-bottom: 0.25rem; font-size: 0.8rem; font-weight: 500; }
+    .form-control-sm, .form-select-sm { font-size: .875rem !important; padding: .25rem .5rem !important; height: calc(1.5em + .5rem + 2px); }
+    .calculated-field.form-control-sm { background-color: var(--bs-tertiary-bg); } 
+
+    /* Estilos Modo Oscuro */
+    [data-bs-theme="dark"] .card-header-custom-ingreso { background-color: #00599e; }
+    [data-bs-theme="dark"] .fieldset-custom-ingreso { border-color: var(--bs-border-color); }
+    [data-bs-theme="dark"] .fieldset-custom-ingreso legend { color: #5096dc; border-bottom-color: #5096dc; }
+    [data-bs-theme="dark"] .btn-ingreso-custom { background-color: #5096dc; border-color: #5096dc; color: #07273d; }
+    [data-bs-theme="dark"] .btn-ingreso-custom:hover { background-color: #4582bf; border-color: #4582bf; }
+    [data-bs-theme="dark"] .calculated-field.form-control-sm { background-color: #495057; color: #e9ecef; }
+</style>
+{% endblock %}
+
+{% block content_header %}
+    {# Este bloque se deja vacío intencionalmente para que el contenido principal suba #}
+{% endblock %}
+
+{% block content %}
+{# CAMBIO: Se eliminó la clase mt-2 del siguiente div para quitar el margen superior #}
+<div class="container-fluid p-0" style="margin-top:0 !important; padding-top:0 !important;">
+    <div class="row justify-content-center" style="margin-top:0 !important;">
+        <div class="col-12 d-flex justify-content-center" style="margin-top:0 !important;">
+            <div class="card card-form-ingreso" style="margin-top:0 !important; margin-bottom: 20px;">
+                <div class="card-header card-header-custom-ingreso text-center" style="padding-top:0.3rem;padding-bottom:0.3rem;margin-top:0 !important;">
+                    <h4 class="mb-0 h5">
+                        <i class="bi bi-file-earmark-text-fill me-2"></i>
+                        {% if contrato_id_being_edited %}
+                            Editando Contrato ID: {{ contrato_id_being_edited }}
+                        {% else %}
+                            Formulario de Ingreso: Ciclos y Prorrateos
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body pt-3 pb-4 px-md-4 px-3">
+                    <form method="POST" action="{{ url_for('ciclos_prorrateos_html.procesar_formulario_ingreso_ciclos') }}" id="formIngresoCiclos">
+    {{ form.csrf_token if form and form.csrf_token }}
+    {% if errors %}
+        {% for error in errors %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ error }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {# Los mensajes flash se reservan solo para éxito o errores globales de backend, no para validaciones de formulario aquí #}
+
+                        
+                        {% if contrato_id_being_edited %}
+                            <input type="hidden" name="contrato_id_a_actualizar" value="{{ contrato_id_being_edited }}">
+                        {% endif %}
+                        
+                        <fieldset class="fieldset-custom-ingreso">
+                            <legend>Datos del Cliente</legend>
+                            <div class="row g-3 mb-2">
+    <!-- Mejora de layout: todos los campos en una sola fila en desktop, stack en mobile -->
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="tipo_documento" class="form-label">Tipo Documento*:</label>
+                                    <select class="form-select form-select-sm" id="tipo_documento" name="tipo_documento" required>
+                                        {% set current_tipo_doc = form_data_to_edit.get('tipo_documento', 'DNI') if form_data_to_edit else request.form.get('tipo_documento', 'DNI') %}
+                                        <option value="DNI" {% if current_tipo_doc == 'DNI' %}selected{% endif %}>DNI</option>
+                                        <option value="CE" {% if current_tipo_doc == 'CE' %}selected{% endif %}>CE</option>
+                                        <option value="RUC" {% if current_tipo_doc == 'RUC' %}selected{% endif %}>RUC</option>
+                                        <option value="PASAPORTE" {% if current_tipo_doc == 'PASAPORTE' %}selected{% endif %}>PASAPORTE</option>
+                                    </select>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="numero_documento" class="form-label">Núm. Documento*:</label>
+                                    <input type="text" class="form-control form-control-sm" id="numero_documento" name="numero_documento" 
+                                           value="{{ form_data_to_edit.get('numero_documento', '') if form_data_to_edit else request.form.get('numero_documento', '') }}" 
+                                           required pattern="\d*" maxlength="11" title="Solo números. DNI: 8 dígitos, RUC: 11 dígitos. Otros hasta 11.">
+                                </div>
+                                <div class="col-lg-6 col-md-12 col-12 mb-2">
+                                    <label for="nombre_cliente" class="form-label">Nombre Completo Cliente*:</label>
+                                    <input type="text" class="form-control form-control-sm" id="nombre_cliente" name="nombre_cliente" 
+                                           value="{{ form_data_to_edit.get('nombre_cliente', '') if form_data_to_edit else request.form.get('nombre_cliente', '') }}" 
+                                           required pattern="[a-zA-ZñÑáéíóúÁÉÍÓÚ\s]+" title="Solo letras y espacios.">
+                                </div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="lugar_nacimiento_cliente" class="form-label">Lugar de Nacimiento (solo texto):</label>
+<input type="text" class="form-control form-control-sm" id="lugar_nacimiento_cliente" name="lugar_nacimiento_cliente"
+       placeholder="Ej: Lima, Perú" pattern="[a-zA-ZñÑáéíóúÁÉÍÓÚ\s,.'-]+" maxlength="60"
+       value="{{ form_data_to_edit.get('lugar_nacimiento_cliente', '') if form_data_to_edit else request.form.get('lugar_nacimiento_cliente', '') }}"
+       oninput="this.value = this.value.replace(/[^a-zA-ZñÑáéíóúÁÉÍÓÚ\s,.'-]/g, '');">
+<script>
+// Bloquear ingreso de números en el campo Lugar de Nacimiento
+const lugarNacimientoInput = document.getElementById('lugar_nacimiento_cliente');
+if (lugarNacimientoInput) {
+  lugarNacimientoInput.addEventListener('keydown', function(e) {
+    // Permitir teclas de navegación, borrar, tab, etc.
+    if ([8,9,13,16,17,18,20,27,32,37,38,39,40,46].includes(e.keyCode)) return;
+    // Permitir letras, tildes, espacio, coma, punto, apóstrofe, guion
+    if (/^[a-zA-ZñÑáéíóúÁÉÍÓÚ\s,.'-]$/.test(e.key)) return;
+    // Bloquear números y cualquier otro carácter
+    e.preventDefault();
+  });
+}
+</script>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="fecha_nacimiento_cliente" class="form-label">Fecha Nacimiento (Cliente):</label>
+                                    <input type="date" class="form-control form-control-sm" id="fecha_nacimiento_cliente" name="fecha_nacimiento_cliente" 
+                                           value="{{ form_data_to_edit.get('fecha_nacimiento_cliente', '') if form_data_to_edit else request.form.get('fecha_nacimiento_cliente', '') }}">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="celular" class="form-label">Celular (Línea)*:</label>
+                                    <input type="tel" class="form-control form-control-sm" id="celular" name="celular" 
+                                           value="{{ form_data_to_edit.get('celular', '') if form_data_to_edit else request.form.get('celular', '') }}" 
+                                           placeholder="Ej: 987654321" required pattern="\d{9}" maxlength="9" title="Solo 9 números.">
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <label for="correo_cliente" class="form-label">Correo Electrónico (Cliente):</label>
+                                    <input type="email" class="form-control form-control-sm" id="correo_cliente" name="correo_cliente" 
+                                           value="{{ form_data_to_edit.get('correo_cliente', '') if form_data_to_edit else request.form.get('correo_cliente', '') }}" placeholder="cliente@ejemplo.com">
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset class="fieldset-custom-ingreso">
+    <legend>Configuración de Ciclo y Plan</legend>
+    <div class="row g-3">
+        <div class="col-lg-4 col-md-6">
+            <label for="fecha_hoy" class="form-label">Fecha de Referencia (HOY)*:</label>
+            <input type="date" class="form-control form-control-sm" id="fecha_hoy" name="fecha_hoy" 
+                   value="{{ form_data_to_edit.get('fecha_hoy', today_date) if form_data_to_edit and form_data_to_edit.get('fecha_hoy') else request.form.get('fecha_hoy', today_date if today_date else '') }}" readonly required>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <label for="ciclo_base_seleccionado" class="form-label">Lógica de Ciclo Base*:</label>
+            <select class="form-select form-select-sm" id="ciclo_base_seleccionado" name="ciclo_base_seleccionado" required>
+                <option value="">Seleccione...</option>
+                {% set current_ciclo_base = form_data_to_edit.get('ciclo_base_seleccionado') if form_data_to_edit else request.form.get('ciclo_base_seleccionado') %}
+                {% for opcion_ciclo in ciclo_base_opciones if ciclo_base_opciones %}
+                    {% if opcion_ciclo is mapping %} 
+                        <option value="{{ opcion_ciclo.value }}" {% if current_ciclo_base == opcion_ciclo.value %}selected{% endif %}>{{ opcion_ciclo.text }}</option>
+                    {% else %} 
+                        <option value="{{ opcion_ciclo }}" {% if current_ciclo_base == opcion_ciclo %}selected{% endif %}>{{ opcion_ciclo.replace("_", " ") }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+            <small id="supervisorMsg" class="supervisor-msg d-block mt-1"></small>
+        </div>
+        <div class="col-lg-4 col-md-12" id="divCicloFinalManual" style="display: none;">
+            <label for="ciclo_final_dia_manual" class="form-label">Día de Ciclo Final (Manual)*:</label>
+            <select class="form-select form-select-sm" id="ciclo_final_dia_manual" name="ciclo_final_dia_manual">
+                <option value="">Seleccione día...</option>
+                {% set current_ciclo_manual = form_data_to_edit.get('ciclo_final_dia_manual') if form_data_to_edit else request.form.get('ciclo_final_dia_manual') %}
+                {% for dia in ciclos_disponibles if ciclos_disponibles %}
+                <option value="{{ dia }}" {% if current_ciclo_manual == dia|string %}selected{% endif %}>{{ "%02d"|format(dia) }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="row mt-1">
+        <div class="col-md-12">
+            <label for="plan_id" class="form-label">Plan*:</label>
+            <select class="form-select form-select-sm" id="plan_id" name="plan_id" required>
+                <option value="">Seleccione plan...</option>
+                {% set current_plan_id = form_data_to_edit.get('plan_id') if form_data_to_edit else request.form.get('plan_id') %}
+                {% for plan_item in planes if planes %}
+                <option value="{{ plan_item.id }}" data-prorrateo-dia="{{ plan_item.prorrateo_dia_base }}" {% if current_plan_id == plan_item.id|string %}selected{% endif %}>
+                    S/. {{ plan_item.precio }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</fieldset>
+<fieldset class="fieldset-custom-ingreso">
+    <legend>Resultados Calculados (Previsualización)</legend>
+    <div class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label text-muted">Día de Ciclo Final Aplicado:</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_ciclo_final_aplicado" readonly>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted">Prorrateo por Día (Plan):</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_prorrateo_dia" readonly>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted">Fecha de Cierre:</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_fecha_cierre" readonly>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted">Prorrateo Total (Calculado):</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_prorrateo_total" readonly>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted">Fecha de Activación:</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_fecha_activacion" readonly>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted">Fecha de Pago:</label>
+            <input type="text" class="form-control form-control-sm calculated-field" id="display_fecha_pago" readonly>
+        </div>
+    </div>
+</fieldset>
+
+                        <div class="d-grid gap-2 mt-3"> 
+                            <button type="submit" class="btn btn-ingreso-custom btn-lg">
+                                <i class="bi bi-check-circle-fill me-2"></i>
+                                {% if contrato_id_being_edited %}Actualizar Contrato{% else %}Registrar Contrato de Ciclos{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block body_extra_js %}
+    <script src="{{ url_for('static', filename='js/ingreso_ciclos.js') }}"></script> 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Pequeña demora para asegurar que Jinja haya renderizado todo
+            // y el script principal de ingreso_ciclos.js haya adjuntado sus listeners.
+            setTimeout(function() {
+                const cicloBaseSelect = document.getElementById('ciclo_base_seleccionado');
+                const planSelect = document.getElementById('plan_id');
+                
+                // Solo dispara si hay un valor y estamos "editando" (form_data_to_edit existe y tiene datos)
+                const formDataToEdit = {{ form_data_to_edit|tojson|safe if form_data_to_edit else '{}' }};
+
+                if (Object.keys(formDataToEdit).length > 0) {
+                    if (cicloBaseSelect && cicloBaseSelect.value) {
+                        console.log("Disparando manualmente 'change' en cicloBaseSelect para carga de edición.");
+                        cicloBaseSelect.dispatchEvent(new Event('change'));
+                    } else if (planSelect && planSelect.value) { 
+                         console.log("Disparando manualmente 'change' en planSelect para carga de edición (cicloBase estaba vacío).");
+                         planSelect.dispatchEvent(new Event('change'));
+                    } else {
+                        // Si ni ciclo base ni plan tienen valor inicial al editar (raro, pero por si acaso)
+                        // llama a updateCalculations directamente para que al menos se limpien los campos
+                        // o se intente un cálculo si la fecha de referencia es suficiente.
+                        // El script ingreso_ciclos.js ya tiene una llamada inicial a updateCalculations,
+                        // así que esto podría ser redundante o para asegurar.
+                        if (typeof updateCalculations === "function") { // Asegurar que la función exista
+                            console.log("Llamando a updateCalculations directamente en carga de edición.");
+                            updateCalculations();
+                        }
+                    }
+                }
+            }, 150); 
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/modal_confirmacion.js') }}"></script>
+{% endblock %}
